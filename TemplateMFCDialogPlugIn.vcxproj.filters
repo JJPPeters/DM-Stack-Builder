@@ -122,6 +122,9 @@
     <ClInclude Include="DMWrapper\DMWorker.h">
       <Filter>Header Files\DM</Filter>
     </ClInclude>
+    <ClInclude Include="NumberType.h">
+      <Filter>Header Files\Boiler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

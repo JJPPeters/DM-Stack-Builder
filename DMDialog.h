@@ -53,13 +53,35 @@ private:
 
 	void addBuilder(StackBuilder tobuild)
 	{
-		// TODO: don't allow duplicates
+		// wait to get the lock, this seems dodgy.
 		while (!buildermtx.try_lock()) { }
-		//boost::lock_guard<boost::mutex> lock(buildermtx);
+
+		// find if this image already exists
+
+		bool exists = false;
+
+		std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
+		while (it != builders.end())
+		{
+			boost::shared_ptr<StackBuilder> current = *it;
+
+			if (current->getImageID() == tobuild.getImageID())
+			{
+				exists = true;
+			}
+			++it;
+		}
+
+		if (exists)
+		{
+			DMresult << "Already watching this image." << DMendl;
+			return;
+		}
+
 		builders.push_back(boost::make_shared<StackBuilder>(tobuild));
 		buildermtx.unlock();
 
-		// set equivalent of push_back
+		// set equivalent of push_back, for reference
 		// builders.insert(builders.end(), boost::make_shared<StackBuilder>(tobuild));
 	}
 
@@ -78,10 +100,7 @@ private:
 			std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
 			while (it != builders.end())
 			{
-				// post-increment operator returns a copy, then increment
-				//std::list<boost::shared_ptr<StackBuilder>>::iterator current = it++;
 				boost::shared_ptr<StackBuilder> currentbuilder = *it;
-				//DMresult << "testing if open" << DMendl;
 				bool isopen = currentbuilder->watchedImage.IsOpen();
 				if (isopen)
 					++it;

@@ -14,6 +14,38 @@ enum ShowComplex{
 	SHOW_ABS
 };
 
+/*
+Binary type number: 14
+int 1 type number: 9
+int 2 type number: 1
+int 4 type number: 7
+uint 1 type number: 6
+uint 2 type number: 10
+uint 4 type number: 11
+real 4 type number: 2
+real 8 type number: 12
+complex 8 type number: 3
+complex 16 type number: 13
+RGB 4 type number: 23
+*/
+namespace DataType
+{
+	enum DataTypes {
+		BOOL = 14,
+		INT_1 = 9,
+		INT_2 = 1,
+		INT_4 = 7,
+		UINT_1 = 6,
+		UINT_2 = 10,
+		UINT_4 = 11,
+		FLOAT = 2,
+		DOUBLE = 12,
+		COMPLEX_FLOAT = 3,
+		COMPLEX_DOUBLE = 13,
+		RGB = 23
+	};
+}
+
 class DMImage
 {
 private:
@@ -24,7 +56,12 @@ public:
 	DM::Image Image;
 	DM::ImageDisplay Display;
 
-	bool isSquarePow2()
+	unsigned long getDataType() const
+	{
+		return Image.GetDataType();
+	}
+
+	bool isSquarePow2() const
 	{
 		return ((width != 0) && !(width & (width - 1))) && ((height != 0) && !(height & (height - 1))) && (width == height);
 	}
@@ -177,7 +214,7 @@ public:
 	template <typename T>
 	void SetComplexData(const std::vector<T> &source, ShowComplex doComplex);
 
-	ulong getID()
+	unsigned long getID() const
 	{
 		return Image.GetID();
 	}
@@ -202,7 +239,7 @@ public:
 			t = false;
 			// TODO: create a member of construction that is the window
 			// this error is caused as we have tried to create a window from a closed image, instead of creating a window from an open image and then testing it.
-			DMresult << ex.what() << DMendl; // probably a null window error, basically means that it is closed?
+			// DMresult << ex.what() << DMendl; // probably a null window error, basically means that it is closed?
 		}
 		catch (...)
 		{

@@ -9,7 +9,11 @@
 #include "boost/thread/mutex.hpp"
 #include "boost/thread.hpp"
 
+#include "NumberType.h"
+
 class CDMDialog;
+
+
 
 class StackBuilder : public DMWorker, public DMListenable
 {
@@ -27,11 +31,12 @@ private:
 	// Main body of the alignment code. Runs in new thread to avoid locking anything else.
 	void DoWork();
 
-	double lastPixel;
+	numbertype lastPixel;
 
 public:
 	StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImage tobewatched) : parent(myparent), dialogmtx(mydialogmtx), watchedImage(tobewatched)
 	{
+		// need a better way to set this to the initial value
 		lastPixel = 0.0;
 		watchedImage.CreateDataListener();
 		watchedImage.DataListener->addListenable(this);
@@ -39,14 +44,26 @@ public:
 
 	StackBuilder(const StackBuilder& other) : parent(other.parent), dialogmtx(other.dialogmtx), watchedImage(other.watchedImage), lastPixel(other.lastPixel)
 	{
-		lastPixel = 0.0;
+		lastPixel = other.lastPixel;
 		watchedImage.CreateDataListener();
 		watchedImage.DataListener->addListenable(this);
 	}
 
-	~StackBuilder() { Stop(); }
+	~StackBuilder()
+	{
+		Stop();
+		watchedImage.RemoveDataListener();
+	}
+
+	unsigned long getImageID()
+	{
+		return watchedImage.getID();
+	}
 
 	void Process();
+
+	template <typename T>
+	void BuildStack();
 
 	DMImage watchedImage;
 };

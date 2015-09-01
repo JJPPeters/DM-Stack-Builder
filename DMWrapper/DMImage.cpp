@@ -8,6 +8,8 @@
 #include <boost/function.hpp>
 
 
+// TODO: Initialise image from constructor (pass argument to decide which type)
+
 void DMImage::fromFront()
 {
 	int success = DM::GetFrontImage(Image);

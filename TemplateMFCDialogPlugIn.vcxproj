@@ -739,6 +739,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DMWrapper\DMWorker.h" />
+    <ClInclude Include="NumberType.h" />
     <ClInclude Include="StackBuilder.h" />
     <ClInclude Include="DMDialog.h" />
     <ClInclude Include="DMWrapper\DMColmap.h" />
