@@ -29,9 +29,9 @@ public:
 		return ((width != 0) && !(width & (width - 1))) && ((height != 0) && !(height & (height - 1))) && (width == height);
 	}
 
-	unsigned long getWidth(){ return width; };
-	unsigned long getHeight(){ return height; };
-	unsigned long getDepth(){ return depth; };
+	unsigned long getWidth(){ Image.GetDimensionSizes(width, height, depth); return width; };
+	unsigned long getHeight(){ Image.GetDimensionSizes(width, height, depth); return height; };
+	unsigned long getDepth(){ Image.GetDimensionSizes(width, height, depth); return depth; };
 
 	std::vector<boost::shared_ptr<DMROI>> ROIs;
 
@@ -39,6 +39,15 @@ public:
 	boost::shared_ptr<DMListener> DataListener;
 
 	DMImage() : ROIListener(new DMListener), DataListener(new DMListener) {}
+
+	template <typename T>
+	T &getElement(int j, int i)
+	{
+		Gatan::PlugIn::ImageDataLocker iLocker = Gatan::PlugIn::ImageDataLocker(Image);
+		T* idata = static_cast<T*>(iLocker.get());
+
+		return idata[j * width + i];
+	}
 
 	template <typename T>
 	DMImage(const std::vector<std::complex<T>> &data, std::string title, int bytes, int x, int y, int z) : ROIListener(new DMListener), DataListener(new DMListener)
@@ -148,6 +157,7 @@ public:
 	void SetWindowPosition(coord<long> pos) { DM::SetWindowPosition(Image, pos.x, pos.y); }
 	void SetWindowSize(coord<long> size) { DM::SetWindowSize(Image, size.x, size.y); }
 
+	// make these return a vector?
 	template <typename T>
 	void GetData(std::vector<T> &destination) { GetData(destination, 0, 0, height, width, 0, 1); }
 
@@ -167,6 +177,40 @@ public:
 	template <typename T>
 	void SetComplexData(const std::vector<T> &source, ShowComplex doComplex);
 
+	ulong getID()
+	{
+		return Image.GetID();
+	}
+
+	bool operator==(DMImage& RHS)
+	{
+		return getID() == RHS.getID();
+	}
+
+	bool IsOpen()
+	{
+		DM::ImageDocument temp = Image.GetOrCreateImageDocument();
+		DM::Window tempwin = temp.GetWindow();
+		bool t = false;
+		// have been getting some sort of error here so lets just try
+		try
+		{
+			t = tempwin.IsOpen();
+		}
+		catch (std::exception& ex)
+		{
+			t = false;
+			// TODO: create a member of construction that is the window
+			// this error is caused as we have tried to create a window from a closed image, instead of creating a window from an open image and then testing it.
+			DMresult << ex.what() << DMendl; // probably a null window error, basically means that it is closed?
+		}
+		catch (...)
+		{
+			t = false;
+		}
+		return t;
+	}
+	
 private:
 
 	template <typename U, typename T>

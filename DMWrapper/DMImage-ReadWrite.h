@@ -71,9 +71,9 @@ void DMImage::GetLockerData(std::vector<T> &destination, int t, int l, int b, in
 	Gatan::PlugIn::ImageDataLocker iLocker = Gatan::PlugIn::ImageDataLocker(Image);
 	U* idata = static_cast<U*>(iLocker.get());
 	for (int j = t; j < b; j++)
-	for (int i = l; i < r; i++)
-	for (int k = front; k < back; k++)
-		destination[(i - t) + (j - t)*(r - l) + (k - front)*(r - l)*(b - t)] = static_cast<T>(idata[i + j * width + k * width * height]);
+		for (int i = l; i < r; i++)
+			for (int k = front; k < back; k++)
+				destination[(i - t) + (j - t)*(r - l) + (k - front)*(r - l)*(b - t)] = static_cast<T>(idata[i + j * width + k * width * height]);
 	iLocker.~ImageDataLocker();
 }
 

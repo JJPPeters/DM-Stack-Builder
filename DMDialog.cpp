@@ -11,15 +11,15 @@ IMPLEMENT_DYNCREATE(CDMDialog, CDialog)
 BEGIN_MESSAGE_MAP(CDMDialog, CDialog)
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
-	ON_BN_CLICKED(IDC_BTN_ALIGN, &CDMDialog::OnBnClickedBtnGpa)
-	//ON_BN_CLICKED(IDC_RDO_XCF, &CDMDialog::OnBnClickedBtnGpa)
-	//ON_BN_CLICKED(IDC_RDO_PCF, &CDMDialog::OnBnClickedBtnGpa)
-	//ON_CBN_SELCHANGE(IDC_CMB_DEVICES, &CDMDialog::OnCbnSelchangeCmbDevices)
+	ON_BN_CLICKED(IDC_BTN_START, &CDMDialog::OnBnClickedBtnStart)
+	ON_BN_CLICKED(IDC_BTN_STOP, &CDMDialog::OnBnClickedBtnStop)
+	ON_BN_CLICKED(IDC_BTN_PAUSE, &CDMDialog::OnBnClickedBtnPause)
+	ON_EN_CHANGE(IDC_EDIT_EXPOSURE, &CDMDialog::OnEdtChangedExposure)
 END_MESSAGE_MAP()
 
-CDMDialog::CDMDialog(CWnd* pParent) : CDialog(CDMDialog::IDD, pParent), dialogmtx(new boost::mutex), s_bfactor("150"), s_thresh("5")
+CDMDialog::CDMDialog(CWnd* pParent) : CDialog(CDMDialog::IDD, pParent), dialogmtx(new boost::mutex), s_Exposure("0.005")
 {
-	builder = boost::make_shared<StackBuilder>(StackBuilder(this, dialogmtx));
+	Start();
 }
 
 CDMDialog::~CDMDialog(){}
@@ -27,15 +27,10 @@ CDMDialog::~CDMDialog(){}
 void CDMDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_CMB_DEVICES, combo_CLdev);
-	DDX_Control(pDX, IDC_CMB_METHOD, combo_method);
-	DDX_Control(pDX, IDC_RDO_XCF, chk_XCF);
-	DDX_Control(pDX, IDC_RDO_PCF, chk_PCF);
-	DDX_Control(pDX, IDC_PROGRESS, progressBar);
-	DDX_Control(pDX, IDC_TXT_BFACT, txt_bfactor);
-	DDX_Text(pDX, IDC_TXT_BFACT, s_bfactor);
-	DDX_Control(pDX, IDC_TXT_THRESH, txt_thresh);
-	DDX_Text(pDX, IDC_TXT_THRESH, s_thresh);
+	DDX_Control(pDX, IDC_RDO_STEM, chk_STEM);
+	DDX_Control(pDX, IDC_RDO_TEM, chk_TEM);
+	DDX_Control(pDX, IDC_EDIT_EXPOSURE, edt_Exposure);
+	DDX_Text(pDX, IDC_EDIT_EXPOSURE, s_Exposure);
 }
 
 BOOL CDMDialog::Create(UINT templateID, CWnd* pParentWnd){return CDialog::Create(IDD, pParentWnd);}
@@ -48,21 +43,54 @@ BOOL CDMDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	int i;
-
-	i = combo_method.AddString("Normal");
-	combo_method.SetItemData(i, (DWORD)0);
-	i = combo_method.AddString("Overdetermined");
-	combo_method.SetItemData(i, (DWORD)1);
-	combo_method.SetCurSel(0);
-	combo_method.EnableWindow(true);
-
-	chk_XCF.SetCheck(1);
+	chk_STEM.SetCheck(1);
 
 	return true;
 }
 
-void CDMDialog::OnBnClickedBtnGpa()
+void CDMDialog::OnBnClickedBtnStart()
 {
-	builder->Process();
+	//chk_STEM.EnableWindow(FALSE);
+	//chk_TEM.EnableWindow(FALSE);
+
+	DMImage front = DMImage();
+	front.fromFront();
+
+	addBuilder(StackBuilder(this, dialogmtx, front));
+	//builders.push_back( boost::make_shared<StackBuilder>(StackBuilder(this, dialogmtx, front)) );
+
+	//builders.back()->Process();
+}
+
+void CDMDialog::OnBnClickedBtnStop()
+{
+	//DMImage selected = DMImage();
+	//selected.fromFront();
+
+	//for (int pos = 0; pos < builders.size(); ++pos)
+	//	if (selected == builders[pos]->getImage())
+	//	{
+	//		builders[pos]->Stop();
+	//		break;
+	//	}
+	//chk_STEM.EnableWindow(TRUE);
+	//chk_TEM.EnableWindow(TRUE);
+}
+
+void CDMDialog::OnBnClickedBtnPause()
+{
+	//DMImage selected = DMImage();
+	//selected.fromFront();
+
+	//for (int pos = 0; pos < builders.size(); ++pos)
+	//	if (selected == builders[pos]->getImage())
+	//	{
+	//		builders[pos]->Pause();
+	//		break;
+	//	}
+}
+
+void CDMDialog::OnEdtChangedExposure()
+{
+
 }

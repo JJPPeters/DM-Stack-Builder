@@ -146,8 +146,8 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DebugRun|x64'">false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\Programming\Cpp\DMSDK\include;$(BOOST_1_57_0);$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Programming\Cpp\DMSDK\lib\$(Platform);$(BOOST_1_57_0)\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(DMSDK)\include;$(BOOST_1_57_0);$(IncludePath)</IncludePath>
+    <LibraryPath>$(DMSDK)\lib\$(Platform);$(BOOST_1_57_0)\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNoOpt|x64'">
     <IncludePath>C:\Program Files (x86)\AMD APP SDK\2.9\include;C:\Program Files (x86)\AMD\clAmdFft\include;C:\ProgramData\Gatan\DMSDK\include;D:\Cpp\boost_1_55_0;$(IncludePath)</IncludePath>
@@ -158,8 +158,8 @@
     <LibraryPath>C:\ProgramData\Gatan\DMSDK\lib\$(Platform);C:\Program Files (x86)\AMD\clAmdFft\lib64\import;C:\Program Files (x86)\AMD APP SDK\2.9\lib\x86_64;D:\Cpp\boost_1_55_0\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRun|x64'">
-    <IncludePath>C:\Program Files (x86)\AMD APP SDK\2.9\include;C:\Program Files (x86)\AMD\clAmdFft\include;C:\ProgramData\Gatan\DMSDK\include;D:\Cpp\boost_1_55_0;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\JonP\Git\clWrapper\clWrapper\x64\Release;C:\ProgramData\Gatan\DMSDK\lib\$(Platform);C:\Program Files (x86)\AMD\clAmdFft\lib64\import;C:\Program Files (x86)\AMD APP SDK\2.9\lib\x86_64;D:\Cpp\boost_1_55_0\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Cpp\DMSDK\include;$(BOOST_1_57_0);D:\Programming\Cpp\Visual Studio\2008\VC\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Cpp\DMSDK\lib\$(Platform);$(BOOST_1_57_0)\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <BuildLog>
@@ -693,7 +693,7 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>DMPlugInBasic.lib;Foundation.lib;OpenCL.lib;clFFT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DMPlugInBasic.lib;Foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
       <AdditionalLibraryDirectories>..\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>

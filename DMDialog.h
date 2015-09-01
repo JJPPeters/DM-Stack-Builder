@@ -11,8 +11,9 @@
 #include "boost/thread.hpp"
 
 #include "StackBuilder.h"
+#include <deque>
 
-class CDMDialog : public CDialog
+class CDMDialog : public CDialog, public DMWorker
 {
 	DECLARE_DYNCREATE(CDMDialog)
 
@@ -34,24 +35,63 @@ public:
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
-	afx_msg void OnBnClickedBtnGpa();
+	afx_msg void OnBnClickedBtnStart();
+	afx_msg void OnBnClickedBtnStop();
+	afx_msg void OnBnClickedBtnPause();
+	afx_msg void OnEdtChangedExposure();
 private:
-	CComboBox combo_CLdev;
-	CComboBox combo_method;
-	CNumEdit txt_bfactor;
-	CString s_bfactor;
-	CNumEdit txt_thresh;
-	CString s_thresh;
-	CProgressCtrl progressBar;
-	CButton chk_XCF;
-	CButton chk_PCF;
+	CButton chk_STEM;
+	CButton chk_TEM;
+	CString s_Exposure;
+	CNumEdit edt_Exposure;
 
 	boost::shared_ptr<boost::mutex> dialogmtx;
-	boost::mutex progressmtx; // is this needed
+	boost::mutex buildermtx;
+	boost::mutex workmtx;
 
-	boost::shared_ptr<StackBuilder> builder;
-public:
+	std::list<boost::shared_ptr<StackBuilder>> builders;
 
-	void SetProgressRange(int start, int end) { boost::lock_guard<boost::mutex> lock(progressmtx); progressBar.SetRange(start, end); }
-	void SetProgressPos(int pos) { boost::lock_guard<boost::mutex> lock(progressmtx); progressBar.SetPos(pos); }
+	void addBuilder(StackBuilder tobuild)
+	{
+		// TODO: don't allow duplicates
+		while (!buildermtx.try_lock()) { }
+		//boost::lock_guard<boost::mutex> lock(buildermtx);
+		builders.push_back(boost::make_shared<StackBuilder>(tobuild));
+		buildermtx.unlock();
+
+		// set equivalent of push_back
+		// builders.insert(builders.end(), boost::make_shared<StackBuilder>(tobuild));
+	}
+
+	//boost::shared_ptr<StackBuilder> getBuilder(int index)
+	//{
+	//	boost::lock_guard<boost::mutex> lock(buildermtx);
+	//	return builders[index];
+	//}
+
+	void DoWork()
+	{
+		boost::lock_guard<boost::mutex> lock(workmtx);
+		while (!IsStopping())
+		{
+			boost::lock_guard<boost::mutex> lock(buildermtx);
+			std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
+			while (it != builders.end())
+			{
+				// post-increment operator returns a copy, then increment
+				//std::list<boost::shared_ptr<StackBuilder>>::iterator current = it++;
+				boost::shared_ptr<StackBuilder> currentbuilder = *it;
+				//DMresult << "testing if open" << DMendl;
+				bool isopen = currentbuilder->watchedImage.IsOpen();
+				if (isopen)
+					++it;
+				else
+					it = builders.erase(it);
+			}
+
+			// spam this!!
+			//DMresult << "Number watched: " << builders.size() << DMendl;
+			Sleep(100);
+		}
+	}
 };

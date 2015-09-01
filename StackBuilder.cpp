@@ -5,6 +5,8 @@
 
 #include "DMWrapper/DMout.h"
 
+#include <dos.h> // for sleep
+#include <stdlib.h> // for rand
 
 void StackBuilder::Process()
 {
@@ -14,10 +16,22 @@ void StackBuilder::Process()
 
 void StackBuilder::DoWork()
 {
-	// lock the DoWork method, possibly not needed but just to be safe
-	// I may be a bit mutex happy after discovering them
-	boost::lock_guard<boost::mutex> lock(workmtx);
+	int sy = watchedImage.getHeight();
+	int sx = watchedImage.getWidth();
 
-	// Here is where the code will go.
-	DMresult << "Hello World!" << DMendl;
+	DMresult << "Doing my listen, " << sx << ", " << sy << DMendl;
+
+	// get current lastPixel;
+	// this template type depends on the type of the image
+	// basically this DoWork function needs to just get the data type and then call a template function to do the actual maths etc... (or just convert to a double for processing
+	double currentPixel = watchedImage.getElement<double>(sy-1, sx-1);
+
+	DMresult << "last: " << lastPixel << ", current: " << currentPixel << DMendl;
+
+	if (std::abs(std::abs(currentPixel) - std::abs(lastPixel)) > 1e-10)
+	{
+		DMresult << "Last Pixel Changed" << DMendl;
+	}
+
+	lastPixel = currentPixel;
 }

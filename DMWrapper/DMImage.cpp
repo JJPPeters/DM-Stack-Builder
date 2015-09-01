@@ -3,6 +3,11 @@
 #include "DMImage.h"
 #include "DMout.h"
 
+// for event handler tests
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+
+
 void DMImage::fromFront()
 {
 	int success = DM::GetFrontImage(Image);
