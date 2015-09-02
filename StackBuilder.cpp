@@ -86,6 +86,15 @@ void StackBuilder::DoWork()
 }
 
 template <typename T>
+numbertpe StackBuilder::getLastPixel()
+{
+	int sy = watchedImage.getHeight();
+	int sx = watchedImage.getWidth();
+
+	return watchedImage.getElement<T>(sy - 1, sx - 1);
+}
+
+template <typename T>
 void StackBuilder::BuildStack()
 {
 	int sy = watchedImage.getHeight();
@@ -107,4 +116,15 @@ void StackBuilder::BuildStack()
 
 	// if label to do auto update.. (or label to create certain amount)
 	// if changed then...
+}
+
+void StackBuilder::startBuilding(int slices)
+{
+
+	// create a new image, how to determine size?
+	int sy = watchedImage.getHeight();
+	int sx = watchedImage.getWidth();
+
+	buildImage = fromType
+
 }

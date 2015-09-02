@@ -86,6 +86,54 @@ public:
 		return idata[j * width + i];
 	}
 
+	void fromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
+	{
+		switch (dtype)
+		{
+		case DataType::BOOL:
+			Image = DM::BinaryImage(title.c_str(), x, y, z);
+			break;
+		case DataType::INT_1:
+			Image = DM::IntegerImage(title.c_str(), 1, false, x, y, z);
+			break;
+		case DataType::INT_2:
+			Image = DM::IntegerImage(title.c_str(), 2, false, x, y, z);
+			break;
+		case DataType::INT_4:
+			Image = DM::IntegerImage(title.c_str(), 4, false, x, y, z);
+			break;
+		case DataType::UINT_1:
+			Image = DM::IntegerImage(title.c_str(), 1, true, x, y, z);
+			break;
+		case DataType::UINT_2:
+			Image = DM::IntegerImage(title.c_str(), 2, true, x, y, z);
+			break;
+		case DataType::UINT_4:
+			Image = DM::IntegerImage(title.c_str(), 4, true, x, y, z);
+			break;
+		case DataType::FLOAT:
+			Image = DM::RealImage(title, 4, x, y, z);
+			break;
+		case DataType::DOUBLE:
+			Image = DM::RealImage(title, 8, x, y, z);
+			break;
+		case DataType::COMPLEX_FLOAT:
+			Image = DM::ComplexImage(title.c_str(), 8, x, y, z);
+			break;
+		case DataType::COMPLEX_DOUBLE:
+			Image = DM::ComplexImage(title.c_str(), 16, x, y, z);
+			break;
+		case DataType::RGB:
+			DMresult << "RGB images are not supported yet." << DMendl;
+			return;
+			break;
+		default:
+			DMresult << "I don't know this image type." << DMendl;
+			return;
+			break;
+		}
+	}
+
 	template <typename T>
 	DMImage(const std::vector<std::complex<T>> &data, std::string title, int bytes, int x, int y, int z) : ROIListener(new DMListener), DataListener(new DMListener)
 	{

@@ -33,16 +33,24 @@ private:
 
 	numbertype lastPixel;
 
+	DataType::DataTypes watchedType;
+
+	template <typename T>
+	numbertype getLastPixel();
+
 public:
 	StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImage tobewatched) : parent(myparent), dialogmtx(mydialogmtx), watchedImage(tobewatched)
 	{
 		// need a better way to set this to the initial value
-		lastPixel = 0.0;
+
+		watchedType = static_cast<DataType::DataTypes>(watchedImage.getDataType());
+
+
 		watchedImage.CreateDataListener();
 		watchedImage.DataListener->addListenable(this);
 	}
 
-	StackBuilder(const StackBuilder& other) : parent(other.parent), dialogmtx(other.dialogmtx), watchedImage(other.watchedImage), lastPixel(other.lastPixel)
+	StackBuilder(const StackBuilder& other) : parent(other.parent), dialogmtx(other.dialogmtx), watchedImage(other.watchedImage), lastPixel(other.lastPixel), watchedType(other.watchedType)
 	{
 		lastPixel = other.lastPixel;
 		watchedImage.CreateDataListener();
@@ -55,6 +63,8 @@ public:
 		watchedImage.RemoveDataListener();
 	}
 
+	void startBuilding(int slices);
+
 	unsigned long getImageID()
 	{
 		return watchedImage.getID();
@@ -66,4 +76,5 @@ public:
 	void BuildStack();
 
 	DMImage watchedImage;
+	DMImage buildImage;
 };
