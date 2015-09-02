@@ -65,7 +65,7 @@ private:
 		{
 			boost::shared_ptr<StackBuilder> current = *it;
 
-			if (current->getImageID() == tobuild.getImageID())
+			if (current->GetImageID() == tobuild.GetImageID())
 			{
 				exists = true;
 			}
@@ -101,7 +101,7 @@ private:
 			while (it != builders.end())
 			{
 				boost::shared_ptr<StackBuilder> currentbuilder = *it;
-				bool isopen = currentbuilder->watchedImage.IsOpen();
+				bool isopen = currentbuilder->IsImageOpen();
 				if (isopen)
 					++it;
 				else

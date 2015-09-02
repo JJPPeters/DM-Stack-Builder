@@ -79,6 +79,16 @@ void CDMDialog::OnBnClickedBtnStop()
 
 void CDMDialog::OnBnClickedBtnPause()
 {
+	std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
+	while (it != builders.end())
+	{
+		boost::shared_ptr<StackBuilder> current = *it;
+
+		current->StartBuildingFixed(10);
+
+		++it;
+	}
+
 	//DMImage selected = DMImage();
 	//selected.fromFront();
 

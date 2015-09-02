@@ -50,6 +50,7 @@ bool DMWorker::IsStopping()
 }
 
 // I don't like my while loop method for doing this, but it works for now.
+// should use an event, basically use the waitforsingleobject as the 'while loop'
 bool DMWorker::WaitForUnPaused()
 {
 	while (IsPaused() && !IsStopping()) { Sleep(1); }
