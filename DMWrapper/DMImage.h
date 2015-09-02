@@ -145,93 +145,9 @@ public:
 		}
 	}
 
-	//template <typename T>
-	//DMImage(const std::vector<std::complex<T>> &data, std::string title, int bytes, int x, int y, int z) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, z);
-	//	SetComplexData(data, SHOW_REAL);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<std::complex<T>> &data, std::string title, int bytes, int x, int y, int z, long t, long l, long b, long r) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, z, t, l, b, r);
-	//	SetComplexData(data, SHOW_REAL);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<T> &data, std::string title, int bytes, int x, int y, int z) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, z);
-	//	SetRealData(data);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<T> &data, std::string title, int bytes, int x, int y, int z, long t, long l, long b, long r) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, z, t, l, b, r);
-	//	SetRealData(data);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<std::complex<T>> &data, std::string title, int bytes, int x, int y) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y);
-	//	SetComplexData(data, SHOW_REAL);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<std::complex<T>> &data, std::string title, int bytes, int x, int y, long t, long l, long b, long r) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, t, l, b, r);
-	//	SetComplexData(data, SHOW_REAL);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<T> &data, std::string title, int bytes, int x, int y) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y);
-	//	SetRealData(data);
-	//}
-
-	//template <typename T>
-	//DMImage(const std::vector<T> &data, std::string title, int bytes, int x, int y, long t, long l, long b, long r) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, t, l, b, r);
-	//	SetRealData(data);
-	//}
-
-	//DMImage(std::string title, int bytes, int x, int y, int z) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, z);
-	//}
-
-	//DMImage(std::string title, int bytes, int x, int y, int z, long t, long l, long b, long r) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, z, t, l, b, r);
-	//}
-
-	//DMImage(std::string title, int bytes, int x, int y) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y);
-	//}
-
-	//DMImage(std::string title, int bytes, int x, int y, long t, long l, long b, long r) : ROIListener(new DMListener), DataListener(new DMListener)
-	//{
-	//	fromReal(title, bytes, x, y, t, l, b, r);
-	//}
-
 	~DMImage() { RemoveDataListener(); RemoveROIListener(); }
 
 	void fromFront();
-
-	//void fromReal(std::string title, int bytes, int x, int y, int z);
-	//void fromReal(std::string title, int bytes, int x, int y, int z, long t, long l, long b, long r);
-
-	//void fromReal(std::string title, int bytes, int x, int y);
-	//void fromReal(std::string title, int bytes, int x, int y, long t, long l, long b, long r);
-
-	//void Reshape(float Ratio, int x, int y);
 
 	void DeleteImage() { DM::DeleteImage(Image); }
 
@@ -253,16 +169,8 @@ public:
 	void SetWindowPosition(coord<long> pos) { DM::SetWindowPosition(Image, pos.x, pos.y); }
 	void SetWindowSize(coord<long> size) { DM::SetWindowSize(Image, size.x, size.y); }
 
-	// make these return a vector?
 
-
-
-	//template <typename T>
-	//void GetData(std::vector<T> &destination) { GetData(destination, 0, 0, height, width, 0, 1); }
-
-	//template <typename T>
-	//void GetData(std::vector<T> &destination, DMROI crop) { GetData(destination, crop.t, crop.l, crop.b, crop.r, 0, 1); }
-
+	// want versions that return a vector
 	template <typename T>
 	void GetSliceData(std::vector<T> &destination) { GetSliceData(destination, 0, 1); }
 
@@ -290,16 +198,6 @@ public:
 
 	template <typename T>
 	void SetSliceData(std::vector<T> &newdata, int front, int back);
-
-	//template <typename T>
-	//void SetRealData(const std::vector<T> &source, int offset);
-	//template <typename T>
-	//void SetRealData(const std::vector<T> &source);
-
-	//template <typename T>
-	//void SetComplexData(const std::vector<T> &source, int offset, ShowComplex doComplex);
-	//template <typename T>
-	//void SetComplexData(const std::vector<T> &source, ShowComplex doComplex);
 
 	unsigned long getID() const
 	{
@@ -334,18 +232,6 @@ public:
 		}
 		return t;
 	}
-	
-private:
-
-	//template <typename T>
-	//void GetLockerData(std::vector<T> &destination, int t, int l, int b, int r, int front, int back);
-
-	//template <typename U, typename T>
-	//void SetRealLockerData(const std::vector<T> &source, int offset);
-
-	//template <typename U, typename T>
-	//void SetComplexLockerData(const std::vector<T> &source, int offeset, ShowComplex doComplex);
-
 };
 
 // This is where the template parts are implemented
