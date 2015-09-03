@@ -718,10 +718,10 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DMWrapper\DMImageGeneric.cpp" />
     <ClCompile Include="DMWrapper\DMWorker.cpp" />
     <ClCompile Include="StackBuilder.cpp" />
     <ClCompile Include="DMDialog.cpp" />
-    <ClCompile Include="DMWrapper\DMImage.cpp" />
     <ClCompile Include="DMWrapper\DMROI.cpp" />
     <ClCompile Include="DMWrapper\DMListener.cpp" />
     <ClCompile Include="NumEdit.cpp" />
@@ -738,6 +738,7 @@
     <ClCompile Include="DialogPlugIn.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DMWrapper\DMImageGeneric.h" />
     <ClInclude Include="DMWrapper\DMWorker.h" />
     <ClInclude Include="NumberType.h" />
     <ClInclude Include="StackBuilder.h" />

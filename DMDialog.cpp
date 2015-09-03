@@ -53,7 +53,7 @@ void CDMDialog::OnBnClickedBtnStart()
 	//chk_STEM.EnableWindow(FALSE);
 	//chk_TEM.EnableWindow(FALSE);
 
-	DMImage front = DMImage();
+	DMImageGeneric front = DMImageGeneric();
 	front.fromFront();
 
 	addBuilder(StackBuilder(this, dialogmtx, front));

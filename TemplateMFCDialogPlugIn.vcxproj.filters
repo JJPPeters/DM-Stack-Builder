@@ -42,9 +42,6 @@
     <ClCompile Include="DMWrapper\DMROI.cpp">
       <Filter>Source Files\DM</Filter>
     </ClCompile>
-    <ClCompile Include="DMWrapper\DMImage.cpp">
-      <Filter>Source Files\DM</Filter>
-    </ClCompile>
     <ClCompile Include="DMWrapper\DMListener.cpp">
       <Filter>Source Files\DM</Filter>
     </ClCompile>
@@ -55,6 +52,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DMWrapper\DMWorker.cpp">
+      <Filter>Source Files\DM</Filter>
+    </ClCompile>
+    <ClCompile Include="DMWrapper\DMImageGeneric.cpp">
       <Filter>Source Files\DM</Filter>
     </ClCompile>
   </ItemGroup>
@@ -124,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="NumberType.h">
       <Filter>Header Files\Boiler</Filter>
+    </ClInclude>
+    <ClInclude Include="DMWrapper\DMImageGeneric.h">
+      <Filter>Header Files\DM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

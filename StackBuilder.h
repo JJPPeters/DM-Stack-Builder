@@ -47,8 +47,8 @@ private:
 
 	CDMDialog* parent;
 
-	DMImage watchedImage;
-	DMImage buildingImage;
+	DMImage<T> watchedImage;
+	DMImage<T> buildingImage;
 
 	T oldPixel;
 
@@ -62,7 +62,8 @@ private:
 
 public:
 
-	Builder(DMImage towatch, CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx) : watchedImage(towatch), parent(myparent), dialogmtx(mydialogmtx)
+	// TODO: check that these are constructing the images properly (not just trying to copy, could cast them)
+	Builder(DMImageGeneric towatch, CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx) : watchedImage(towatch), parent(myparent), dialogmtx(mydialogmtx)
 	{
 		dofixed = false;
 		doexpanded = false;
@@ -70,10 +71,10 @@ public:
 		int sy = watchedImage.getHeight();
 		int sx = watchedImage.getWidth();
 
-		oldPixel = watchedImage.getElement<T>(sy - 1, sx - 1);
+		oldPixel = watchedImage.getElement(sy - 1, sx - 1);
 
 		watchedImage.CreateDataListener(); // TODO: this shouldn't need to be called beforehand??
-		watchedImage.DataListener->addListenable(this);
+		watchedImage.GetDataListener()->addListenable(this);
 	}
 
 	~Builder()
@@ -91,29 +92,29 @@ public:
 
 	void DoWork()
 	{
-		DMresult << "Doing my listen!" << DMendl;
+		//DMresult << "Doing my listen!" << DMendl;
 
 		int sy = watchedImage.getHeight();
 		int sx = watchedImage.getWidth();
 
-		T newPixel = watchedImage.getElement<T>(sy - 1, sx - 1);
+		T newPixel = watchedImage.getElement(sy - 1, sx - 1);
 
 		if (newPixel == oldPixel)
 			return;
 
-		DMresult << "Last pixel changed!!!" << DMendl;
+		//DMresult << "Last pixel changed!!!" << DMendl;
 		// reset values for the next datachange call
 		oldPixel = newPixel;
 
+		// check if we are doing the build and have a method to build by
 		if (!(dofixed || doexpanded) || !dobuild)
 			return;
 
 		// only for fixed method
 		if (sliceindex >= slicenumber)
 			return;
-	
-		// get data from watched image
 
+		// get data from watched image
 		std::vector<T> newSlice(sx*sy);
 		try
 		{
@@ -124,7 +125,7 @@ public:
 			DMresult << ex.what() << DMendl;
 			return;
 		}
-		
+
 		// copy over to correct slice of building image
 		try
 		{
@@ -136,16 +137,32 @@ public:
 			return;
 		}
 
-		buildingImage.DataChanged();
+		buildingImage.DataChanged(); // might want to not do this until very end
 
 		// done?
 		++sliceindex;
 
 		// just for testing so i don't have to worry about resetting anything
 		if (sliceindex >= slicenumber)
+		{
 			sliceindex = 0;
-		
+			dobuild = false;
+		}
 
+
+
+		int expand_number = 3;
+
+		// for expandable only, get current image depth, if sliceindex >= then reshape image
+		if (sliceindex >= buildingImage.getDepth())
+		{
+			std::vector<T> imagecopy(sx*sy*buildingImage.getDepth());
+			// get all data
+			buildingImage.GetData(imagecopy);
+			buildingImage.AddSlices(expand_number);
+			buildingImage.getDepth(imagecopy);
+			//set all data
+		}
 	}
 
 	bool IsImageOpen() { return watchedImage.IsOpen(); }
@@ -183,7 +200,7 @@ private:
 
 public:
 
-		StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImage tobewatched)
+		StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImageGeneric tobewatched)
 		{
 
 			DataType::DataTypes dtype = static_cast<DataType::DataTypes>(tobewatched.getDataType());

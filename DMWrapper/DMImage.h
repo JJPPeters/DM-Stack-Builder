@@ -1,94 +1,18 @@
 #pragma once
 
-#include "DMListener.h"
-#include "DMROI.h"
-#include "DMout.h"
+#include "DMImageGeneric.h"
 
-#include <boost/shared_ptr.hpp>
-
-//enum ShowComplex{
-//	SHOW_REAL,
-//	SHOW_IMAG,
-//	SHOW_AMP,
-//	SHOW_PHASE,
-//	SHOW_ABS
-//};
-
-/*
-Binary type number: 14
-int 1 type number: 9
-int 2 type number: 1
-int 4 type number: 7
-uint 1 type number: 6
-uint 2 type number: 10
-uint 4 type number: 11
-real 4 type number: 2
-real 8 type number: 12
-complex 8 type number: 3
-complex 16 type number: 13
-RGB 4 type number: 23
-*/
-namespace DataType
+template <typename T>
+class DMImage : public DMImageGeneric
 {
-	enum DataTypes {
-		BOOL = 14,
-		INT_1 = 9,
-		INT_2 = 1,
-		INT_4 = 7,
-		UINT_1 = 6,
-		UINT_2 = 10,
-		UINT_4 = 11,
-		FLOAT = 2,
-		DOUBLE = 12,
-		COMPLEX_FLOAT = 3,
-		COMPLEX_DOUBLE = 13,
-		RGB = 23
-	};
-}
-
-class DMImage
-{
-private:
-	unsigned long width;
-	unsigned long height;
-	unsigned long depth;
 public:
-	DM::Image Image;
-	DM::ImageDisplay Display;
 
-	unsigned long getDataType() const
-	{
-		return Image.GetDataType();
-	}
+	DMImage() : DMImageGeneric() {}
 
-	void DataChanged()
-	{
-		Image.DataChanged();
-	}
+	// copy generic to the typed version
+	DMImage(const DMImageGeneric& other) : DMImageGeneric(other) { }
 
-	void Show()
-	{
-		Image.GetOrCreateImageDocument().Show();
-		Image.GetOrCreateImageDocument().Clean(); // not sure if this is needed
-	}
-
-	bool isSquarePow2() const
-	{
-		return ((width != 0) && !(width & (width - 1))) && ((height != 0) && !(height & (height - 1))) && (width == height);
-	}
-
-	unsigned long getWidth(){ Image.GetDimensionSizes(width, height, depth); return width; };
-	unsigned long getHeight(){ Image.GetDimensionSizes(width, height, depth); return height; };
-	unsigned long getDepth(){ Image.GetDimensionSizes(width, height, depth); return depth; };
-
-	std::vector<boost::shared_ptr<DMROI>> ROIs;
-
-	boost::shared_ptr<DMListener> ROIListener;
-	boost::shared_ptr<DMListener> DataListener;
-
-	DMImage() : ROIListener(new DMListener), DataListener(new DMListener) {}
-
-	template <typename T>
+	// not sure if returning by reference is dodgy?
 	T &getElement(int j, int i)
 	{
 		Gatan::PlugIn::ImageDataLocker iLocker = Gatan::PlugIn::ImageDataLocker(Image);
@@ -97,84 +21,11 @@ public:
 		return idata[j * width + i];
 	}
 
-	void fromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
-	{
-		switch (dtype)
-		{
-		case DataType::BOOL:
-			Image = DM::BinaryImage(title.c_str(), x, y, z);
-			break;
-		case DataType::INT_1:
-			Image = DM::IntegerImage(title.c_str(), 1, false, x, y, z);
-			break;
-		case DataType::INT_2:
-			Image = DM::IntegerImage(title.c_str(), 2, false, x, y, z);
-			break;
-		case DataType::INT_4:
-			Image = DM::IntegerImage(title.c_str(), 4, false, x, y, z);
-			break;
-		case DataType::UINT_1:
-			Image = DM::IntegerImage(title.c_str(), 1, true, x, y, z);
-			break;
-		case DataType::UINT_2:
-			Image = DM::IntegerImage(title.c_str(), 2, true, x, y, z);
-			break;
-		case DataType::UINT_4:
-			Image = DM::IntegerImage(title.c_str(), 4, true, x, y, z);
-			break;
-		case DataType::FLOAT:
-			Image = DM::RealImage(title, 4, x, y, z);
-			break;
-		case DataType::DOUBLE:
-			Image = DM::RealImage(title, 8, x, y, z);
-			break;
-		case DataType::COMPLEX_FLOAT:
-			Image = DM::ComplexImage(title.c_str(), 8, x, y, z);
-			break;
-		case DataType::COMPLEX_DOUBLE:
-			Image = DM::ComplexImage(title.c_str(), 16, x, y, z);
-			break;
-		case DataType::RGB:
-			DMresult << "RGB images are not supported yet." << DMendl;
-			return;
-			break;
-		default:
-			DMresult << "I don't know this image type." << DMendl;
-			return;
-			break;
-		}
-	}
-
-	~DMImage() { RemoveDataListener(); RemoveROIListener(); }
-
-	void fromFront();
-
-	void DeleteImage() { DM::DeleteImage(Image); }
-
-	void addROI(DMROI roi);
-
-	void CreateROIListener();
-	void AddROIListener();
-	void RemoveROIListener();
-
-	void CreateDataListener();
-	void AddDataListener();
-	void RemoveDataListener();
-
-	void ClearListenables(){ (*ROIListener).ClearListeners(); (*ROIListener).ClearROIs(); }
-
-	coord<long> GetWindowPosition() { long x, y; DM::GetWindowPosition(Image, &x, &y); return coord<long>(x, y); }
-	coord<long> GetWindowSize() { long x, y; DM::GetWindowSize(Image, &x, &y); return coord<long>(x, y); }
-
-	void SetWindowPosition(coord<long> pos) { DM::SetWindowPosition(Image, pos.x, pos.y); }
-	void SetWindowSize(coord<long> size) { DM::SetWindowSize(Image, size.x, size.y); }
-
+	void GetData(std::vector<T> &destination);
 
 	// want versions that return a vector
-	template <typename T>
 	void GetSliceData(std::vector<T> &destination) { GetSliceData(destination, 0, 1); }
 
-	template <typename T>
 	void GetSliceData(std::vector<T> &destination, int slice)
 	{
 		if (!(slice < getDepth()) || slice < 0)
@@ -182,13 +33,12 @@ public:
 		GetSliceData(destination, slice, slice+1);
 	}
 
-	template <typename T>
 	void GetSliceData(std::vector<T> &destination, int front, int back);
 
-	template <typename T>
+	void SetData(std::vector<T> &newdata)
+
 	void SetSliceData(std::vector<T> &newdata) { SetSliceData(newdata, 0, 1); }
 
-	template <typename T>
 	void SetSliceData(std::vector<T> &newdata, int slice)
 	{
 		if (!(slice < getDepth()) || slice < 0)
@@ -196,42 +46,7 @@ public:
 		SetSliceData(newdata, slice, slice + 1);
 	}
 
-	template <typename T>
 	void SetSliceData(std::vector<T> &newdata, int front, int back);
-
-	unsigned long getID() const
-	{
-		return Image.GetID();
-	}
-
-	bool operator==(DMImage& RHS)
-	{
-		return getID() == RHS.getID();
-	}
-
-	bool IsOpen()
-	{
-		DM::ImageDocument temp = Image.GetOrCreateImageDocument();
-		DM::Window tempwin = temp.GetWindow();
-		bool t = false;
-		// have been getting some sort of error here so lets just try
-		try
-		{
-			t = tempwin.IsOpen();
-		}
-		catch (std::exception& ex)
-		{
-			t = false;
-			// TODO: create a member of construction that is the window
-			// this error is caused as we have tried to create a window from a closed image, instead of creating a window from an open image and then testing it.
-			// DMresult << ex.what() << DMendl; // probably a null window error, basically means that it is closed?
-		}
-		catch (...)
-		{
-			t = false;
-		}
-		return t;
-	}
 };
 
 // This is where the template parts are implemented
