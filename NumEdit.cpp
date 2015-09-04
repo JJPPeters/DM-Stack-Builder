@@ -5,6 +5,8 @@
 #include "NumEdit.h"
 
 #include <errno.h>
+#include <string>
+#include <cstddef> 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -15,9 +17,11 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CNumEdit
 
+// this is hardcoded custom, only allows integers that are greater than 1
 CNumEdit::CNumEdit()
 {
-	myType = TypeDouble;
+	blockneg = true;
+	myType = TypeLong;
 	myRejectingChange = false;
 }
 
@@ -59,8 +63,37 @@ void CNumEdit::OnUpdate()
 {
 	if (! myRejectingChange)
 	{
+		bool isneg = false;
 		CString aValue;
 		GetWindowText(aValue);
+
+		if (aValue == "")
+		{
+			aValue = "1";
+			//myRejectingChange = true;
+			SetWindowText(aValue);
+			//myRejectingChange = false;
+			SetSel(-1);
+			return;
+		}
+		else if (aValue != "0")
+		{
+			// remove leading 0
+			std::string sValue(aValue);
+			int nz = sValue.find_first_not_of('0');
+			sValue.erase(0, nz);
+			aValue = sValue.c_str();
+			if (nz > 0)
+			{
+				//myRejectingChange = true;
+				SetWindowText(aValue);
+				//myRejectingChange = false;
+				SetSel(myLastSel);
+				return;
+			}
+			
+		}
+
 		LPTSTR aEndPtr;
 		union
 		{
@@ -73,13 +106,17 @@ void CNumEdit::OnUpdate()
 		{
 		case TypeLong:
 			aLongValue = _tcstol(aValue, &aEndPtr, 10);
+			if (aLongValue < 1 && blockneg)
+				isneg = true;
 			break;
 		case TypeDouble:
 			aDoubleValue = _tcstod(aValue, &aEndPtr);
+			if (aDoubleValue < 1 && blockneg)
+				isneg = true;
 			break;
 		}
 
-		if (! (*aEndPtr) && errno != ERANGE)
+		if ((!(*aEndPtr)) && (errno != ERANGE) && (!isneg))
 		{
 			myLastValidValue = aValue;
 		}

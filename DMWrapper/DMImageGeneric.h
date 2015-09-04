@@ -60,6 +60,8 @@ public:
 
 	unsigned long getDataType() const { return Image.GetDataType(); }
 	unsigned long getID() const { return Image.GetID(); }
+	long GetDisplayID() { return Display.GetID(); }
+	std::string GetTitle() const { return Image.GetName(); }
 
 	boost::shared_ptr<DMListener> GetDataListener() { return DataListener; }
 	boost::shared_ptr<DMListener> GetROIListener() { return ROIListener; }

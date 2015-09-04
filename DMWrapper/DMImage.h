@@ -35,7 +35,7 @@ public:
 
 	void GetSliceData(std::vector<T> &destination, int front, int back);
 
-	void SetData(std::vector<T> &newdata)
+	void SetData(std::vector<T> &newdata);
 
 	void SetSliceData(std::vector<T> &newdata) { SetSliceData(newdata, 0, 1); }
 

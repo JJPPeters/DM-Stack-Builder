@@ -28,6 +28,7 @@ protected:
 	CString myLastValidValue;
 	UINT myLastSel;
 	bool myRejectingChange;
+	bool blockneg;
 
 // Operations
 public:

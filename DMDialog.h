@@ -35,15 +35,21 @@ public:
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
-	afx_msg void OnBnClickedBtnStart();
+	afx_msg void OnBnClickedBtnAdd();
+	afx_msg void OnBnClickedBtnBuild();
 	afx_msg void OnBnClickedBtnStop();
 	afx_msg void OnBnClickedBtnPause();
-	afx_msg void OnEdtChangedExposure();
+	afx_msg void OnEdtChangedSlices();
+	afx_msg void OnBnClickedBtnRemove();
 private:
-	CButton chk_STEM;
-	CButton chk_TEM;
-	CString s_Exposure;
-	CNumEdit edt_Exposure;
+	CButton chk_fixed;
+	CButton chk_expand;
+	CString s_Slices;
+	CNumEdit edt_Slices;
+
+	int numSlices;
+
+	CListCtrl lst_Images;
 
 	boost::shared_ptr<boost::mutex> dialogmtx;
 	boost::mutex buildermtx;
@@ -51,66 +57,13 @@ private:
 
 	std::list<boost::shared_ptr<StackBuilder>> builders;
 
-	void addBuilder(StackBuilder tobuild)
-	{
-		// wait to get the lock, this seems dodgy.
-		while (!buildermtx.try_lock()) { }
+	void addBuilder(DMImageGeneric im);
 
-		// find if this image already exists
+	void removeBuilder(unsigned long id);
 
-		bool exists = false;
+	void addListItem(std::string name, std::string id);
 
-		std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
-		while (it != builders.end())
-		{
-			boost::shared_ptr<StackBuilder> current = *it;
+	void removeListID(unsigned long id);
 
-			if (current->GetImageID() == tobuild.GetImageID())
-			{
-				exists = true;
-			}
-			++it;
-		}
-
-		if (exists)
-		{
-			DMresult << "Already watching this image." << DMendl;
-			return;
-		}
-
-		builders.push_back(boost::make_shared<StackBuilder>(tobuild));
-		buildermtx.unlock();
-
-		// set equivalent of push_back, for reference
-		// builders.insert(builders.end(), boost::make_shared<StackBuilder>(tobuild));
-	}
-
-	//boost::shared_ptr<StackBuilder> getBuilder(int index)
-	//{
-	//	boost::lock_guard<boost::mutex> lock(buildermtx);
-	//	return builders[index];
-	//}
-
-	void DoWork()
-	{
-		boost::lock_guard<boost::mutex> lock(workmtx);
-		while (!IsStopping())
-		{
-			boost::lock_guard<boost::mutex> lock(buildermtx);
-			std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
-			while (it != builders.end())
-			{
-				boost::shared_ptr<StackBuilder> currentbuilder = *it;
-				bool isopen = currentbuilder->IsImageOpen();
-				if (isopen)
-					++it;
-				else
-					it = builders.erase(it);
-			}
-
-			// spam this!!
-			//DMresult << "Number watched: " << builders.size() << DMendl;
-			Sleep(100);
-		}
-	}
+	void DoWork();
 };

@@ -35,6 +35,7 @@ public:
 	virtual int GetImageID() = 0;
 
 	virtual void StartBuildingFixed(int slices) = 0;
+	virtual void StartBuildingExpanding(int slices) = 0;
 };
 
 // actual implementation of the builder
@@ -52,13 +53,13 @@ private:
 
 	T oldPixel;
 
-	int slicenumber, sliceindex;
+	int fixednumber, sliceindex, expandnumber;
 
 	// to really protect these, can we put them in a class that is defined in this class with the getters and setters
 	bool dofixed, doexpanded, dobuild;;
 
 	void SetFixed() { dofixed = true; doexpanded = false; }
-	void SetExpandable() { dofixed = false; doexpanded = true; }
+	void SetExpanding() { dofixed = false; doexpanded = true; }
 
 public:
 
@@ -110,8 +111,8 @@ public:
 		if (!(dofixed || doexpanded) || !dobuild)
 			return;
 
-		// only for fixed method
-		if (sliceindex >= slicenumber)
+		// this is just a safety net, the previoud iteration of this loop should make it so this statement is never hit
+		if (sliceindex >= buildingImage.getDepth())
 			return;
 
 		// get data from watched image
@@ -137,31 +138,26 @@ public:
 			return;
 		}
 
-		buildingImage.DataChanged(); // might want to not do this until very end
+		buildingImage.DataChanged(); // might want to not do this until very end of stack
 
-		// done?
+		// increment iterator, then test if we are to continue or need to expand the stack
 		++sliceindex;
 
-		// just for testing so i don't have to worry about resetting anything
-		if (sliceindex >= slicenumber)
+		// for expandable only, get current image depth, if sliceindex >= then reshape image
+		if (sliceindex >= buildingImage.getDepth() && doexpanded)
+		{
+			std::vector<T> imagecopy(sx*sy*buildingImage.getDepth());
+			buildingImage.GetData(imagecopy);
+			buildingImage.AddSlices(expandnumber);
+			buildingImage.SetData(imagecopy);
+		}
+
+		// only for fixed method
+		if (sliceindex >= fixednumber && dofixed)
 		{
 			sliceindex = 0;
 			dobuild = false;
-		}
-
-
-
-		int expand_number = 3;
-
-		// for expandable only, get current image depth, if sliceindex >= then reshape image
-		if (sliceindex >= buildingImage.getDepth())
-		{
-			std::vector<T> imagecopy(sx*sy*buildingImage.getDepth());
-			// get all data
-			buildingImage.GetData(imagecopy);
-			buildingImage.AddSlices(expand_number);
-			buildingImage.getDepth(imagecopy);
-			//set all data
+			return;
 		}
 	}
 
@@ -172,6 +168,11 @@ public:
 	// here the number of slices is fixed and we just fill them up
 	void StartBuildingFixed(int slices)
 	{
+		// Need to account for if a build has already started
+		// mutex in the dowork loop?
+
+		// call stop() that sets dobuild to false, waits for the dowork mutex to be freed, removes blank frames and...
+
 		sliceindex = 0;
 		DataType::DataTypes dtype = static_cast<DataType::DataTypes>(watchedImage.getDataType());
 
@@ -184,14 +185,43 @@ public:
 
 		// now need to set a flag (with mutex protection?) that will indicate that the DoWork function can start copying the data
 		// set a variable that indicates how many frames (e.g. slices) and a variable to indicate we are doing the fixed slices version.
-		slicenumber = slices;
+		fixednumber = slices;
 
 		dobuild = true;
 		SetFixed();
 	}
+
+	// here the number of slices will expand as we go on
+	void StartBuildingExpanding(int slices)
+	{
+		sliceindex = 0;
+
+		if (doexpanded)
+		{
+			dobuild = false;
+			return;
+		}
+
+		DataType::DataTypes dtype = static_cast<DataType::DataTypes>(watchedImage.getDataType());
+
+		int sy = watchedImage.getHeight();
+		int sx = watchedImage.getWidth();
+
+		// TODO: get name of watched image
+		buildingImage.fromType("building", sx, sy, slices, dtype);
+		buildingImage.Show();
+
+		// now need to set a flag (with mutex protection?) that will indicate that the DoWork function can start copying the data
+		// set a variable that indicates how many frames (e.g. slices) and a variable to indicate we are doing the fixed slices version.
+		expandnumber = slices;
+
+		dobuild = true;
+		SetExpanding();
+	}
 };
 
-// this class is actually pretty pointless now, could just move it to the Dialog class
+// this class is actually pretty pointless now, could just move it to the Dialog class.
+// At least it hides the massive switch statement from view
 class StackBuilder
 {
 private:
@@ -200,105 +230,45 @@ private:
 
 public:
 
-		StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImageGeneric tobewatched)
+	StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImageGeneric tobewatched)
+	{
+
+		DataType::DataTypes dtype = static_cast<DataType::DataTypes>(tobewatched.getDataType());
+
+		switch (dtype)
 		{
-
-			DataType::DataTypes dtype = static_cast<DataType::DataTypes>(tobewatched.getDataType());
-
-			switch (dtype)
-			{
-			case DataType::BOOL:
-				build.reset(new Builder<bool>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::INT_1:
-				build.reset(new Builder<int8_t>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::INT_2:
-				build.reset(new Builder<int16_t>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::INT_4:
-				build.reset(new Builder<int32_t>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::UINT_1:
-				build.reset(new Builder<uint8_t>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::UINT_2:
-				build.reset(new Builder<uint16_t>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::UINT_4:
-				build.reset(new Builder<uint32_t>(tobewatched, myparent, mydialogmtx));break;
-			case DataType::FLOAT:
-				build.reset(new Builder<float>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::DOUBLE:
-				build.reset(new Builder<double>(tobewatched, myparent, mydialogmtx));break;
-			case DataType::COMPLEX_FLOAT:
-				build.reset(new Builder<std::complex<float>>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::COMPLEX_DOUBLE:
-				build.reset(new Builder<std::complex<double>>(tobewatched, myparent, mydialogmtx)); break;
-			case DataType::RGB:
-				DMresult << "RGB images are not supported yet." << DMendl; return; break;
-			default:
-				DMresult << "I don't know this image type." << DMendl; return; break;
-			}
-
+		case DataType::BOOL:
+			build.reset(new Builder<bool>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::INT_1:
+			build.reset(new Builder<int8_t>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::INT_2:
+			build.reset(new Builder<int16_t>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::INT_4:
+			build.reset(new Builder<int32_t>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::UINT_1:
+			build.reset(new Builder<uint8_t>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::UINT_2:
+			build.reset(new Builder<uint16_t>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::UINT_4:
+			build.reset(new Builder<uint32_t>(tobewatched, myparent, mydialogmtx));break;
+		case DataType::FLOAT:
+			build.reset(new Builder<float>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::DOUBLE:
+			build.reset(new Builder<double>(tobewatched, myparent, mydialogmtx));break;
+		case DataType::COMPLEX_FLOAT:
+			build.reset(new Builder<std::complex<float>>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::COMPLEX_DOUBLE:
+			build.reset(new Builder<std::complex<double>>(tobewatched, myparent, mydialogmtx)); break;
+		case DataType::RGB:
+			DMresult << "RGB images are not supported yet." << DMendl; return; break;
+		default:
+			DMresult << "I don't know this image type." << DMendl; return; break;
 		}
 
-		bool IsImageOpen() { return build->IsImageOpen(); }
-		bool GetImageID() { return build->GetImageID(); }
-		void StartBuildingFixed(int slices) { build->StartBuildingFixed(slices); }
+	}
 
+	bool IsImageOpen() { return build->IsImageOpen(); }
+	int GetImageID() { return build->GetImageID(); }
+	void StartBuildingFixed(int slices) { build->StartBuildingFixed(slices); }
+	void StartBuildingExpanding(int slices) { build->StartBuildingExpanding(slices); }
 };
-//	// Mutex shared with the dialog class, used for situations where settings in the dialog need to be updated
-//	boost::shared_ptr<boost::mutex> dialogmtx;
-//	// Mutex purely for the Alignment class, stops the dowork method being called multiple times
-//	boost::mutex workmtx;
-//
-//	boost::mutex exposuremtx;
-//
-//	// Reference to parent dialog. Used to update things like a progress bar
-//	CDMDialog* parent; // can this be made to a shared_ptr?
-//
-//	// Main body of the alignment code. Runs in new thread to avoid locking anything else.
-//	void DoWork();
-//
-//	numbertype lastPixel;
-//
-//	DataType::DataTypes watchedType;
-//
-//	template <typename T>
-//	numbertype getLastPixel();
-//
-//public:
-//	StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImage tobewatched) : parent(myparent), dialogmtx(mydialogmtx), watchedImage(tobewatched)
-//	{
-//		// need a better way to set this to the initial value
-//
-//		watchedType = static_cast<DataType::DataTypes>(watchedImage.getDataType());
-//
-//
-//		watchedImage.CreateDataListener();
-//		watchedImage.DataListener->addListenable(this);
-//	}
-//
-//	StackBuilder(const StackBuilder& other) : parent(other.parent), dialogmtx(other.dialogmtx), watchedImage(other.watchedImage), lastPixel(other.lastPixel), watchedType(other.watchedType)
-//	{
-//		lastPixel = other.lastPixel;
-//		watchedImage.CreateDataListener();
-//		watchedImage.DataListener->addListenable(this);
-//	}
-//
-//	~StackBuilder()
-//	{
-//		Stop();
-//		watchedImage.RemoveDataListener();
-//	}
-//
-//	void startBuilding(int slices);
-//
-//	unsigned long getImageID()
-//	{
-//		return watchedImage.getID();
-//	}
-//
-//	void Process();
-//
-//	template <typename T>
-//	void BuildStack();
-//
-//	DMImage watchedImage;
-//	DMImage buildImage;
-//};
