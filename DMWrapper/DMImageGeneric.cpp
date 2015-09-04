@@ -8,14 +8,12 @@ void DMImageGeneric::fromFront()
 
 	if (!success)
 		throw std::invalid_argument("Cannot get front image");
-	// is there ever an index != 0?
 	Display = Image.GetImageDisplay(0);
 	Image.GetDimensionSizes(width, height, depth);
-	Image.GetDimensionSizes();
-	CreateDataListener();
+	NewDataListener();
 }
 
-void DMImageGeneric::fromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
+void DMImageGeneric::MakeFromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
 {
 	switch (dtype)
 	{
@@ -53,7 +51,7 @@ void DMImageGeneric::fromType(std::string title, int x, int y, int z, DataType::
 		Image = DM::ComplexImage(title.c_str(), 16, x, y, z);
 		break;
 	case DataType::RGB:
-		DMresult << "RGB images are not supported yet." << DMendl;
+		DMresult << "RGB images are not supported yet." << DMendl; // possible throw?
 		return;
 		break;
 	default:
@@ -61,6 +59,17 @@ void DMImageGeneric::fromType(std::string title, int x, int y, int z, DataType::
 		return;
 		break;
 	}
+}
+
+void DMImageGeneric::fromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
+{
+	MakeFromType(title, x, y, z, dtype);
+	NewDataListener();
+	// image might need to be shown to get the display
+	Image.GetOrCreateImageDocument().Show();
+	Display = Image.GetImageDisplay(0);
+	Image.GetOrCreateImageDocument().Hide();
+	Image.GetDimensionSizes(width, height, depth);
 }
 
 void DMImageGeneric::Show()
@@ -88,22 +97,34 @@ void DMImageGeneric::Reshape(int x, int y, int z)
 	RemoveDataListener(); // Causes crashes if listener hasn't been created
 	RemoveROIListener();
 
-	// Ideall would copy data down
-	// copy data down
+	// Ideall would copy data down, but we don't know the type in the generic
+
+	//long start, end;
+
+	//Display.GetDisplayedLayers(&start, &end);
 
 	DeleteImage(); // Doesnt delete ROIs but they need re-adding
 
-	fromType(Title, x, y, z, dtype);
+	MakeFromType(Title, x, y, z, dtype);
 
 	// copy data to new image
 
+
+	//reset stack position
 	ShowAt(pos.y, pos.x, pos.y + size.y, pos.x + size.x);
 
-	AddROIListener();
-	AddDataListener();
+	// does show need to have been called for this to work?
+	Display = Image.GetImageDisplay(0);
+
+	//Display.SetDisplayedLayers(start, end);
+
+	// test that these get readded in a sensible way
+	AddROIListener(); // might jsut need to reset ptr properties instead?
+	AddDataListener(); // not sure it actually matters, might just need to re-add listenables (copy over vector of <*DMlistenables>)
 
 	// transfer new data
 
+	// ill reimplement this when i need it, dose not fit with new workflow
 	//for (int i = 0; i < ROIs.size(); i++)
 	//{
 	//	ROIs[i]->scaleRect(Ratio);
@@ -116,39 +137,43 @@ void DMImageGeneric::addROI(DMROI roi)
 	ROIs.push_back(boost::make_shared<DMROI>(roi));
 
 	if (!(*ROIListener).IsActive())
-		CreateROIListener();
+		NewROIListener();
 
 	(*ROIListener).addROI(ROIs.back().get());
 }
 
-void DMImageGeneric::CreateROIListener()
+void DMImageGeneric::NewROIListener()
 {
 	ROIListener = DMListener::AddImageDisplayListener_Ptr(Display, "ROIListener");
 }
 
 void DMImageGeneric::RemoveROIListener()
 {
-	ROIListener->RemoveDisplayEventListener(Display);
+	if (ROIListener)
+		ROIListener->RemoveDisplayEventListener(Display);
 }
 
 void DMImageGeneric::AddROIListener()
 {
-	ROIListener->AddDisplayEventListener(Display);
+	if (ROIListener)
+		ROIListener->AddDisplayEventListener(Display);
 }
 
-void DMImageGeneric::CreateDataListener()
+void DMImageGeneric::NewDataListener()
 {
 	DataListener = DMListener::AddImageListener_Ptr(Image, "DataListener");
 }
 
 void DMImageGeneric::RemoveDataListener()
 {
-	DataListener->RemoveImageEventListener(Image);
+	if (DataListener)
+		DataListener->RemoveImageEventListener(Image);
 }
 
 void DMImageGeneric::AddDataListener()
 {
-	DataListener->AddImageEventListener(Image);
+	if(DataListener)
+		DataListener->AddImageEventListener(Image);
 }
 
 bool DMImageGeneric::IsOpen()

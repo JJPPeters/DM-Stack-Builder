@@ -29,6 +29,8 @@ public:
 	DMListener() : Active(false) {}
 	DMListener(const char_range &prefix);
 
+	DMListener(const DMListener& other) : Active(other.Active), fPrefix(other.fPrefix), Listeners(other.Listeners), ROIs(other.ROIs) { }
+
 	~DMListener();
 
 	// This is what will happen when the ROI changes.

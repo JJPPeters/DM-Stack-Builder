@@ -44,13 +44,18 @@ protected:
 	boost::shared_ptr<DMListener> ROIListener;
 	boost::shared_ptr<DMListener> DataListener;
 
+	void MakeFromType(std::string title, int x, int y, int z, DataType::DataTypes dtype);
+
 public:
 
 	DMImageGeneric() : ROIListener(new DMListener), DataListener(new DMListener) {}
 
+	//check copy constructor of listenable
 	DMImageGeneric(const DMImageGeneric& other) : Image(other.Image), Display(other.Display), ROIs(other.ROIs), ROIListener(other.ROIListener), DataListener(other.DataListener)
 	{
 		Image.GetDimensionSizes(width, height, depth);
+		AddDataListener();// might need a call to AddDataListener here to re-add display?
+		AddROIListener();
 	}
 
 	~DMImageGeneric() { RemoveDataListener(); RemoveROIListener(); }
@@ -89,11 +94,13 @@ public:
 
 	void addROI(DMROI roi);
 
-	void CreateROIListener();
+	// TODO: add functions to add listenables
+
+	void NewROIListener();
 	void AddROIListener();
 	void RemoveROIListener();
 
-	void CreateDataListener();
+	void NewDataListener();
 	void AddDataListener();
 	void RemoveDataListener();
 

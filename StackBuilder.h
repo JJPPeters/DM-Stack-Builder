@@ -74,7 +74,6 @@ public:
 
 		oldPixel = watchedImage.getElement(sy - 1, sx - 1);
 
-		watchedImage.CreateDataListener(); // TODO: this shouldn't need to be called beforehand??
 		watchedImage.GetDataListener()->addListenable(this);
 	}
 
@@ -147,9 +146,36 @@ public:
 		if (sliceindex >= buildingImage.getDepth() && doexpanded)
 		{
 			std::vector<T> imagecopy(sx*sy*buildingImage.getDepth());
-			buildingImage.GetData(imagecopy);
-			buildingImage.AddSlices(expandnumber);
-			buildingImage.SetData(imagecopy);
+			try
+			{
+				buildingImage.GetData(imagecopy);
+			}
+			catch (const std::exception& ex)
+			{
+				DMresult << ex.what() << DMendl;
+				return;
+			}
+			
+			try
+			{
+				buildingImage.AddSlices(expandnumber);
+			}
+			catch (const std::exception& ex)
+			{
+				DMresult << ex.what() << DMendl;
+				return;
+			}
+
+			try
+			{
+				buildingImage.SetData(imagecopy);
+				buildingImage.DataChanged();
+			}
+			catch (const std::exception& ex)
+			{
+				DMresult << ex.what() << DMendl;
+				return;
+			}
 		}
 
 		// only for fixed method
