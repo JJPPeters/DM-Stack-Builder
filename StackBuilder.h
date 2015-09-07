@@ -137,6 +137,9 @@ public:
 			return;
 		}
 
+		//set current slice to be new one
+		buildingImage.SetDisplayedSlice(sliceindex);
+
 		buildingImage.DataChanged(); // might want to not do this until very end of stack
 
 		// increment iterator, then test if we are to continue or need to expand the stack
@@ -146,6 +149,7 @@ public:
 		if (sliceindex >= buildingImage.getDepth() && doexpanded)
 		{
 			std::vector<T> imagecopy(sx*sy*buildingImage.getDepth());
+			// Get data from building image
 			try
 			{
 				buildingImage.GetData(imagecopy);
@@ -156,6 +160,7 @@ public:
 				return;
 			}
 			
+			// expand the build image
 			try
 			{
 				buildingImage.AddSlices(expandnumber);
@@ -166,6 +171,7 @@ public:
 				return;
 			}
 
+			// copy data back into building image
 			try
 			{
 				buildingImage.SetData(imagecopy);

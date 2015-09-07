@@ -61,6 +61,8 @@ void DMImageGeneric::MakeFromType(std::string title, int x, int y, int z, DataTy
 	}
 }
 
+// need to consider methods to show image when creating (maybe an overload with a boolean?)
+// and is it possible to get the display without showing the image
 void DMImageGeneric::fromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
 {
 	MakeFromType(title, x, y, z, dtype);
@@ -84,6 +86,7 @@ void DMImageGeneric::ShowAt(int t, int l, int b, int r)
 	Image.GetOrCreateImageDocument().Clean();
 }
 
+//TODO: test if the get/set displayed layers function works with non stack images
 void DMImageGeneric::Reshape(int x, int y, int z)
 {
 	coord<long> pos = GetWindowPosition();
@@ -99,9 +102,9 @@ void DMImageGeneric::Reshape(int x, int y, int z)
 
 	// Ideall would copy data down, but we don't know the type in the generic
 
-	//long start, end;
+	long start, end;
 
-	//Display.GetDisplayedLayers(&start, &end);
+	Display.GetDisplayedLayers(&start, &end);
 
 	DeleteImage(); // Doesnt delete ROIs but they need re-adding
 
@@ -109,14 +112,13 @@ void DMImageGeneric::Reshape(int x, int y, int z)
 
 	// copy data to new image
 
-
 	//reset stack position
 	ShowAt(pos.y, pos.x, pos.y + size.y, pos.x + size.x);
 
 	// does show need to have been called for this to work?
 	Display = Image.GetImageDisplay(0);
 
-	//Display.SetDisplayedLayers(start, end);
+	Display.SetDisplayedLayers(start, end);
 
 	// test that these get readded in a sensible way
 	AddROIListener(); // might jsut need to reset ptr properties instead?

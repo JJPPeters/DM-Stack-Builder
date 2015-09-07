@@ -223,7 +223,7 @@ void CDMDialog::DoWork()
 		std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
 		while (it != builders.end())
 		{
-			boost::shared_ptr<StackBuilder> currentbuilder = *it;
+			boost::shared_ptr<StackBuilder> currentbuilder = *it; // crash here on closing DM (in debug mode)
 			bool isopen = currentbuilder->IsImageOpen();
 			unsigned long id = currentbuilder->GetImageID();
 			if (isopen)

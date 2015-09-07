@@ -67,9 +67,11 @@ public:
 	unsigned long getID() const { return Image.GetID(); }
 	long GetDisplayID() { return Display.GetID(); }
 	std::string GetTitle() const { return Image.GetName(); }
-
 	boost::shared_ptr<DMListener> GetDataListener() { return DataListener; }
 	boost::shared_ptr<DMListener> GetROIListener() { return ROIListener; }
+
+	void SetDisplayedSlice(long slice) { Display.SetDisplayedLayers(slice, slice); }
+	void SetDisplayedSlice(long start, long end) { Display.SetDisplayedLayers(start, end); }
 
 	void DataChanged() { Image.DataChanged(); }
 
