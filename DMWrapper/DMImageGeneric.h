@@ -41,21 +41,24 @@ protected:
 
 	std::vector<boost::shared_ptr<DMROI>> ROIs;
 
-	boost::shared_ptr<DMListener> ROIListener;
-	boost::shared_ptr<DMListener> DataListener;
+	boost::shared_ptr<DMDisplayListener> ROIListener;
+	boost::shared_ptr<DMImageListener> DataListener;
 
 	void MakeFromType(std::string title, int x, int y, int z, DataType::DataTypes dtype);
 
 public:
 
-	DMImageGeneric() : ROIListener(new DMListener), DataListener(new DMListener) {}
+	DMImageGeneric() : ROIListener(new DMDisplayListener("ROIListener")), DataListener(new DMImageListener("DataListener")) { DMresult << "ImageGeneric default construction" << DMendl; }
 
 	//check copy constructor of listenable
 	DMImageGeneric(const DMImageGeneric& other) : Image(other.Image), Display(other.Display), ROIs(other.ROIs), ROIListener(other.ROIListener), DataListener(other.DataListener)
 	{
+		DMresult << "ImageGeneric copy construction" << DMendl;
 		Image.GetDimensionSizes(width, height, depth);
-		AddDataListener();// might need a call to AddDataListener here to re-add display?
-		AddROIListener();
+		//AddDataListener();// might need a call to AddDataListener here to re-add display?
+		//AddROIListener();
+		NewDataListener();
+		NewROIListener();
 	}
 
 	~DMImageGeneric() { RemoveDataListener(); RemoveROIListener(); }
@@ -106,7 +109,7 @@ public:
 	void AddDataListener();
 	void RemoveDataListener();
 
-	void ClearListenables() { (*ROIListener).ClearListeners(); (*ROIListener).ClearROIs(); }
+	void ClearListenables() { (*ROIListener).ClearListenables(); (*ROIListener).ClearROIs(); }
 
 	coord<long> GetWindowPosition() { long x, y; DM::GetWindowPosition(Image, &x, &y); return coord<long>(x, y); }
 	coord<long> GetWindowSize() { long x, y; DM::GetWindowSize(Image, &x, &y); return coord<long>(x, y); }

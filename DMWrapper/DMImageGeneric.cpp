@@ -11,6 +11,7 @@ void DMImageGeneric::fromFront()
 	Display = Image.GetImageDisplay(0);
 	Image.GetDimensionSizes(width, height, depth);
 	NewDataListener();
+	//AddDataListener();
 }
 
 void DMImageGeneric::MakeFromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
@@ -66,11 +67,13 @@ void DMImageGeneric::MakeFromType(std::string title, int x, int y, int z, DataTy
 void DMImageGeneric::fromType(std::string title, int x, int y, int z, DataType::DataTypes dtype)
 {
 	MakeFromType(title, x, y, z, dtype);
-	NewDataListener();
+	//NewDataListener();
 	// image might need to be shown to get the display
 	Image.GetOrCreateImageDocument().Show();
 	Display = Image.GetImageDisplay(0);
 	Image.GetOrCreateImageDocument().Hide();
+	//AddDataListener();
+	NewDataListener();
 	Image.GetDimensionSizes(width, height, depth);
 }
 
@@ -141,12 +144,12 @@ void DMImageGeneric::addROI(DMROI roi)
 	if (!(*ROIListener).IsActive())
 		NewROIListener();
 
-	(*ROIListener).addROI(ROIs.back().get());
+	(*ROIListener).AddROI(ROIs.back().get());
 }
 
 void DMImageGeneric::NewROIListener()
 {
-	ROIListener = DMListener::AddImageDisplayListener_Ptr(Display, "ROIListener");
+	ROIListener = DMDisplayListener::AddImageDisplayListener_Ptr(Display, "ROIListener");
 }
 
 void DMImageGeneric::RemoveROIListener()
@@ -163,13 +166,17 @@ void DMImageGeneric::AddROIListener()
 
 void DMImageGeneric::NewDataListener()
 {
-	DataListener = DMListener::AddImageListener_Ptr(Image, "DataListener");
+	DataListener = DMImageListener::AddImageListener_Ptr(Image, "DataListener");
 }
 
 void DMImageGeneric::RemoveDataListener()
 {
+	DMresult << "trying to remove data listener" << DMendl;
 	if (DataListener)
+	{
+		DMresult << "have data listener" << DMendl;
 		DataListener->RemoveImageEventListener(Image);
+	}
 }
 
 void DMImageGeneric::AddDataListener()

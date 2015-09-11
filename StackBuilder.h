@@ -29,6 +29,8 @@ public:
 
 	virtual ~BuilderGeneric() {};
 
+	virtual void StopBuild() = 0;
+
 	virtual void Process() = 0;
 
 	virtual bool IsImageOpen() = 0;
@@ -45,6 +47,7 @@ class Builder : public BuilderGeneric
 private:
 
 	boost::shared_ptr<boost::mutex> dialogmtx;
+	boost::mutex destroymtx;
 
 	CDMDialog* parent;
 
@@ -64,7 +67,7 @@ private:
 public:
 
 	// TODO: check that these are constructing the images properly (not just trying to copy, could cast them)
-	Builder(DMImageGeneric towatch, CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx) : watchedImage(towatch), parent(myparent), dialogmtx(mydialogmtx)
+	Builder(DMImageGeneric& towatch, CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx) : watchedImage(towatch), parent(myparent), dialogmtx(mydialogmtx)
 	{
 		dofixed = false;
 		doexpanded = false;
@@ -74,24 +77,58 @@ public:
 
 		oldPixel = watchedImage.getElement(sy - 1, sx - 1);
 
-		watchedImage.GetDataListener()->addListenable(this);
+		watchedImage.GetDataListener()->AddListenable(this);
 	}
 
 	~Builder()
 	{
+		//i think the remove data listener thing is not working and the listener is still trying to call process after the object has been destroyed
+		// the active variable in the DMlistener is not being maintained properly, possible due to some copy thing (in the image?)
+
+		// could also clear listenables? to stop it calling this
+
+		// it appears something here will crash the program if the dowork thing is still going on
+		DMresult << "dconstruct" << DMendl;
 		// TODO: spend more time making sure everything that needs to be destructed is.
-		Stop();
-		watchedImage.RemoveDataListener();
+		boost::lock_guard<boost::mutex> lock(destroymtx, boost::adopt_lock_t()); // not sure if this waits to get the lock
+		DMresult << "remove listener" << DMendl;
+		watchedImage.RemoveDataListener(); // this might be the part that is crashing
+		DMresult << "stio build" << DMendl;
+		StopBuild(); // this just stops the doWork function doing anything (it is still entered), should be fine
+		DMresult << "stop thread" << DMendl;
+		Stop(); //this stops the worker
+		DMresult << "end" << DMendl;
 	}
 
 	void Process()
 	{
-		boost::lock_guard<boost::mutex> lock(*dialogmtx);
+		//boost::lock_guard<boost::mutex> lock(destroymtx);
 		Start();
+	}
+
+	// not the same as Stop as we want the listening to keep happening
+	void StopBuild()
+	{
+		// need to mutex changing sliceindex as the loop could be half way complete.
+		//sliceindex = 0; // not realy needed, but nice anyway
+		dobuild = false; // this should possibly be protected
+
+
+		// check for blank frames and remove them
 	}
 
 	void DoWork()
 	{
+		// stop the item being deleted whilst it is working, could maybe have something in the destructor
+		// i.e. a mutex for destroying, possible a flag to return at the beginning of this method
+
+		//try to get the lock, if we don't then just return
+
+		if (!destroymtx.try_lock() || !dialogmtx->try_lock())
+			return;
+		boost::lock_guard<boost::mutex> dlock(destroymtx, boost::adopt_lock_t());
+		boost::lock_guard<boost::mutex> lock(*dialogmtx, boost::adopt_lock_t());
+		
 		//DMresult << "Doing my listen!" << DMendl;
 
 		int sy = watchedImage.getHeight();
@@ -262,7 +299,7 @@ private:
 
 public:
 
-	StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImageGeneric tobewatched)
+	StackBuilder(CDMDialog* myparent, boost::shared_ptr<boost::mutex> mydialogmtx, DMImageGeneric& tobewatched)
 	{
 
 		DataType::DataTypes dtype = static_cast<DataType::DataTypes>(tobewatched.getDataType());
@@ -303,4 +340,6 @@ public:
 	int GetImageID() { return build->GetImageID(); }
 	void StartBuildingFixed(int slices) { build->StartBuildingFixed(slices); }
 	void StartBuildingExpanding(int slices) { build->StartBuildingExpanding(slices); }
+
+	void StopBuild(){ build->StopBuild(); }
 };

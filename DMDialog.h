@@ -57,7 +57,7 @@ private:
 
 	std::list<boost::shared_ptr<StackBuilder>> builders;
 
-	void addBuilder(DMImageGeneric im);
+	void addBuilder(DMImageGeneric& im);
 
 	void removeBuilder(unsigned long id);
 

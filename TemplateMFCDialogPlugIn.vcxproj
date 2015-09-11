@@ -147,7 +147,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(DMSDK)\include;$(BOOST_1_57_0);$(IncludePath)</IncludePath>
-    <LibraryPath>$(DMSDK)\lib\$(Platform);$(BOOST_1_57_0)\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(DMSDK)\lib\$(Platform);$(BOOST_1_57_0)\lib\vc9.0\x64\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNoOpt|x64'">
     <IncludePath>C:\Program Files (x86)\AMD APP SDK\2.9\include;C:\Program Files (x86)\AMD\clAmdFft\include;C:\ProgramData\Gatan\DMSDK\include;D:\Cpp\boost_1_55_0;$(IncludePath)</IncludePath>
@@ -159,7 +159,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRun|x64'">
     <IncludePath>$(DMSDK)\include;$(BOOST_1_57_0);$(IncludePath)</IncludePath>
-    <LibraryPath>$(DMSDK)\lib\$(Platform);$(BOOST_1_57_0)\lib\msvc9.0\x64\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(DMSDK)\lib\$(Platform);$(BOOST_1_57_0)\lib\vc9.0\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <BuildLog>

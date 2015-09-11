@@ -56,13 +56,19 @@ BOOL CDMDialog::OnInitDialog()
 
 void CDMDialog::OnBnClickedBtnAdd()
 {
+	DMresult << "TP1" << DMendl;
+	boost::lock_guard<boost::mutex> guard(*dialogmtx);
+	DMresult << "TP2" << DMendl;
+	boost::lock_guard<boost::mutex> lock(buildermtx);
+
 	try
 	{
 		// need to catch if there is no front image :D
 		DMImageGeneric front = DMImageGeneric();
 		front.fromFront();
-
+		DMresult << "TP3" << DMendl;
 		addBuilder(front);
+		DMresult << "TP4" << DMendl;
 	}
 	catch (const std::exception& ex)
 	{
@@ -71,72 +77,78 @@ void CDMDialog::OnBnClickedBtnAdd()
 	}
 }
 
-void CDMDialog::addBuilder(DMImageGeneric im)
+void CDMDialog::addBuilder(DMImageGeneric& im)
 {
-	// wait to get the lock, this seems dodgy.
-	// remember to unlock it at any exit point
-	boost::lock_guard<boost::mutex> guard(*dialogmtx);
-	//while (!buildermtx.try_lock()) {}
-
 	// find if this image already exists
-
 	bool exists = false;
 
 	std::string title = im.GetTitle();
 	long imid = im.getID();
-
-	StackBuilder tobuild = StackBuilder(this, dialogmtx, im);
+	DMresult << "TP5" << DMendl;
 
 	std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
 	while (it != builders.end())
 	{
 		boost::shared_ptr<StackBuilder> current = *it;
-
-		if (current->GetImageID() == tobuild.GetImageID())
+		if (current->GetImageID() == imid)
 			exists = true;
-
 		++it;
 	}
 
 	if (exists)
 	{
 		DMresult << "Already watching this image." << DMendl;
-		//buildermtx.unlock(); // remember to unlock this!!
 		return;
 	}
 
-	builders.push_back(boost::make_shared<StackBuilder>(tobuild));
+	DMresult << "TP6" << DMendl;
+
+	builders.push_back(boost::make_shared<StackBuilder>(StackBuilder(this, dialogmtx, im)));
+
+	DMresult << "TP7" << DMendl;
 
 	// add to the list box showing the watched images
 	addListItem(title, boost::lexical_cast<std::string>(imid));
-
-	//buildermtx.unlock(); // remember to unlock this!!
 }
 
 void CDMDialog::removeBuilder(unsigned long id)
 {
-	boost::lock_guard<boost::mutex> guard(*dialogmtx);
-	//while (!buildermtx.try_lock()) {}
-
 	std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
+	DMresult << "loop list" << DMendl;
 	while (it != builders.end())
 	{
 		boost::shared_ptr<StackBuilder> current = *it;
 
 		if (current->GetImageID() == id)
-			it = builders.erase(it); // keep iterator valid even after erase
+		{
+			DMresult << "found match" << DMendl;
+			try
+			{
+				DMresult << "erase it" << DMendl;
+				it = builders.erase(it); // keep iterator valid even after erase
+			}
+			catch (const std::exception& ex)
+			{
+				//dialogmtx->unlock();
+				DMresult << ex.what() << DMendl;
+				return;
+			}
+		}
 		else
 			++it;
 	}
-
-	//buildermtx.unlock();
+	DMresult << "end" << DMendl;
 }
 
 void CDMDialog::OnBnClickedBtnRemove()
 {
+	boost::lock_guard<boost::mutex> lock(buildermtx);
+	//DMresult << "getting remove lock" << DMendl;
+	boost::lock_guard<boost::mutex> guard(*dialogmtx);
 	//http://stackoverflow.com/questions/20839499/how-to-delete-selected-row-of-a-list-control-in-mfc
 	UINT i, uSelectedCount = lst_Images.GetSelectedCount();
 	int  nItem;
+	DMresult << "entering selected items loop" << DMendl;
 	for (i = 0; i < uSelectedCount; i++)
 	{
 		nItem = lst_Images.GetNextItem(-1, LVNI_SELECTED);
@@ -146,6 +158,7 @@ void CDMDialog::OnBnClickedBtnRemove()
 
 		unsigned long id = boost::lexical_cast<unsigned long>(sID);
 
+		DMresult << "about to remove" << DMendl;
 		// remove from our std::list
 		removeBuilder(id);
 
@@ -163,6 +176,8 @@ void CDMDialog::addListItem(std::string name, std::string id)
 void CDMDialog::OnBnClickedBtnBuild()
 {
 	boost::lock_guard<boost::mutex> guard(*dialogmtx);
+	boost::lock_guard<boost::mutex> lock(buildermtx);
+
 	//while (!buildermtx.try_lock()) {}
 
 	std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
@@ -177,12 +192,21 @@ void CDMDialog::OnBnClickedBtnBuild()
 			current->StartBuildingExpanding(numSlices);
 		++it;
 	}
-
-	//buildermtx.unlock();
 }
 
 void CDMDialog::OnBnClickedBtnStop()
 {
+	boost::lock_guard<boost::mutex> guard(*dialogmtx);
+	boost::lock_guard<boost::mutex> lock(buildermtx);
+
+	std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
+	while (it != builders.end())
+	{
+		boost::shared_ptr<StackBuilder> current = *it;
+
+		current->StopBuild();
+		++it;
+	}
 	//DMImage selected = DMImage();
 	//selected.fromFront();
 
@@ -216,10 +240,15 @@ void CDMDialog::OnEdtChangedSlices()
 
 void CDMDialog::DoWork()
 {
-	boost::lock_guard<boost::mutex> lock(workmtx);
+	if (!workmtx.try_lock())
+		return;
+	boost::lock_guard<boost::mutex> lock(workmtx, boost::adopt_lock_t());
+
 	while (!IsStopping())
 	{
-		boost::lock_guard<boost::mutex> lock(buildermtx);
+		if (!buildermtx.try_lock())
+			return;
+		//boost::lock_guard<boost::mutex> lockb(buildermtx, boost::adopt_lock_t());
 		std::list<boost::shared_ptr<StackBuilder>>::iterator it = builders.begin();
 		while (it != builders.end())
 		{
@@ -236,7 +265,7 @@ void CDMDialog::DoWork()
 				it = builders.erase(it);
 			}
 		}
-
+		buildermtx.unlock();
 		// spam this!!
 		//DMresult << "Number watched: " << builders.size() << DMendl;
 		Sleep(100);
@@ -245,6 +274,7 @@ void CDMDialog::DoWork()
 
 void CDMDialog::removeListID(unsigned long id)
 {
+
 	int  nItem = -1;
 	int n = lst_Images.GetItemCount();
 

@@ -4,6 +4,7 @@
 
 void DMWorker::Start()
 {
+	// another thread cannot be launched
 	if (thread_mtx.try_lock())
 	{
 		// handles to be used later
@@ -19,14 +20,16 @@ UINT DMWorker::ThreadProcess(LPVOID p)
 	// As the mutex is locked in the creating thread
 	// we will unlock then lock it in this thread.
 	// Could be very bad
-	if (!me->thread_mtx.try_lock())
-	{
-		me->thread_mtx.unlock();
-		me->thread_mtx.lock();
-	}
+	//if (!me->thread_mtx.try_lock())
+	//{
+	//	//me->thread_mtx.unlock();
+	//	//me->thread_mtx.lock();
+	//}
+
+	boost::lock_guard<boost::mutex> lock(me->thread_mtx, boost::adopt_lock_t());
 
 	me->DoWork();
-	me->thread_mtx.unlock();
+	//me->thread_mtx.unlock();
 	return 0;
 }
 
