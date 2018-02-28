@@ -1,10 +1,9 @@
 #pragma once
-
 #include "stdafx.h"
 
-#include <boost/shared_ptr.hpp>
-#include "boost/thread/mutex.hpp"
-#include "boost/thread.hpp"
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
+// #include <boost/thread/win32/mfc_thread_init.hpp>
 //	Copyright (C) Dave Kerr, 2009
 //	dopedcoder@googlemail.com
 //  http://www.codeproject.com/Articles/32601/Worker-Class
@@ -24,7 +23,10 @@
 
 //  for an idea on how to stop the thread, chec kout http://stackoverflow.com/questions/590792/how-to-kill-a-mfc-thread
 
-class DMWorker
+// pause stuff was with help from: https://stackoverflow.com/questions/16907072/how-do-i-use-a-boost-condition-variable-to-wait-for-a-thread-to-complete-process
+// and https://msdn.microsoft.com/en-us/library/windows/desktop/ms686903(v=vs.85).aspx
+
+class ThreadWorker
 {
 private:
 	virtual void DoWork() = 0;
@@ -36,11 +38,31 @@ private:
 	boost::mutex thread_mtx;
 
 	HANDLE m_hKillEvent;
+	HANDLE m_hWorkEvent;
+
+	CONDITION_VARIABLE pause_condition;
+
+	CRITICAL_SECTION pause_lock;
 
 	bool paused;
 
+	void Run()
+	{
+		while (ContinueWorking())
+		{
+			// wait for the signal to actuall do something
+			WaitForSingleObject(m_hWorkEvent, INFINITE);
+
+			DoWork();
+		}
+	}
+
 public:
+	ThreadWorker();
+
 	void Start();
+
+	void RunWork();
 
 	//  Stop thread parts are basically taken from
 	//  http://stackoverflow.com/questions/29251723/how-to-safely-close-a-thread-which-has-a-infinite-loop-in-it
@@ -52,10 +74,14 @@ public:
 
 	bool ContinueWorking();
 
-	// this is a really bad way of doing it, but oh well for now
-	void Pause() { paused = !paused; }
+	void Pause();
+	void Pause(bool set_pause);
 
-	bool IsPaused() { return paused; }
+	void WaitIfPaused();
 
-	bool WaitForUnPaused();
+	bool IsPaused()
+	{
+		return paused;
+	} // Is this thread safe?
 };
+

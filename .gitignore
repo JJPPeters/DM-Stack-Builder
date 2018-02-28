@@ -1,13 +1,8 @@
+.vs/
 res/
 x64/
 ipch/
 Win32/
-
-CLKernels_adam.h
-MyDlg1_2.cpp
-MyDlg1_2.h
-MyDlg1_work.cpp
-MyDlg1_work.h
 
 *.sdf
 *.vcproj

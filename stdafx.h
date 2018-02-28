@@ -1,20 +1,11 @@
-// stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
-
 #pragma once
 
-
-//#ifndef VC_EXTRALEAN
-//#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
-//#endif
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+#endif
 
 // Modify the following defines if you have to target a platform prior to the ones specified below.
 // Refer to MSDN for the latest info on corresponding values for different platforms.
-
-//#define BOOST_ALL_DYN_LINK
-//#define BOOST_THREAD_DYN_LINK
-
 #ifndef WINVER				// Allow use of features specific to Windows 95 and Windows NT 4 or later.
 #define WINVER 0x0501		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
 #endif
@@ -24,7 +15,7 @@
 #endif						
 
 #ifndef _WIN32_WINDOWS		// Allow use of features specific to Windows 98 or later.
-#define _WIN32_WINDOWS 0x0501 // Change this to the appropriate value to target Windows Me or later.
+#define _WIN32_WINDOWS 0x0410 // Change this to the appropriate value to target Windows Me or later.
 #endif
 
 #ifndef _WIN32_IE			// Allow use of features specific to IE 4.0 or later.
@@ -67,10 +58,33 @@
 #define _GATAN_USE_MFC
 #define _GATANPLUGIN_USES_LIBRARY_VERSION 2
 #define _GATAN_USE_STL_STRING
-
-
 #include "DMPlugInBasic.h"
-#include "DMPlugInMFCUtility.h"
+
+//#define _GATANPLUGIN_USE_CLASS_PLUGINMAIN
+//#include "DMPlugInMain.h"
+//#include "DMPlugInMFCUtility.h"
 
 using namespace Gatan;
 namespace DigitalMicrograph = Gatan::DM;
+
+#define _DEBUG_LEVEL 0
+
+#if _DEBUG_LEVEL > 2
+#  define DEBUG3(x) (Gatan::PlugIn::gResultOut << "[SB] " << x << std::endl)
+#else
+#  define DEBUG3(x)
+#endif
+
+#if _DEBUG_LEVEL > 1
+#  define DEBUG1(x) (Gatan::PlugIn::gResultOut << "[SB] " << x << std::endl)
+#else
+#  define DEBUG1(x)
+#endif
+
+#if _DEBUG_LEVEL > 2
+#  define DEBUG2(x) (Gatan::PlugIn::gResultOut << "[SB] " << x << std::endl)
+#else
+#  define DEBUG2(x)
+#endif
+
+#define DMResult Gatan::PlugIn::gResultOut
