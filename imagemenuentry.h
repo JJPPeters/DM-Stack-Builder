@@ -188,22 +188,22 @@ public:
 			temp_image = DM::BinaryImage(name.c_str(), x, y, z);
 			break;
 		case DataType::INT_1:
-			temp_image = DM::IntegerImage(name.c_str(), 1, false, x, y, z);
-			break;
-		case DataType::INT_2:
-			temp_image = DM::IntegerImage(name.c_str(), 2, false, x, y, z);
-			break;
-		case DataType::INT_4:
-			temp_image = DM::IntegerImage(name.c_str(), 4, false, x, y, z);
-			break;
-		case DataType::UINT_1:
 			temp_image = DM::IntegerImage(name.c_str(), 1, true, x, y, z);
 			break;
-		case DataType::UINT_2:
+		case DataType::INT_2:
 			temp_image = DM::IntegerImage(name.c_str(), 2, true, x, y, z);
 			break;
-		case DataType::UINT_4:
+		case DataType::INT_4:
 			temp_image = DM::IntegerImage(name.c_str(), 4, true, x, y, z);
+			break;
+		case DataType::UINT_1:
+			temp_image = DM::IntegerImage(name.c_str(), 1, false, x, y, z);
+			break;
+		case DataType::UINT_2:
+			temp_image = DM::IntegerImage(name.c_str(), 2, false, x, y, z);
+			break;
+		case DataType::UINT_4:
+			temp_image = DM::IntegerImage(name.c_str(), 4, false, x, y, z);
 			break;
 		case DataType::FLOAT:
 			temp_image = DM::RealImage(name, 4, x, y, z);
