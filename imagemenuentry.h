@@ -66,6 +66,8 @@ private:
 	DM::Image build_image;
 	bool image_created, is_building;
 
+	boost::mutex stop_mtx;
+
 	T last_pixel;
 	unsigned long next_slice;
 
@@ -85,8 +87,12 @@ public:
 	void StopBuild()
 	{
 		is_building = false;
-		image_created = false;
+
+		// wait for the main work loop to have stopped (in case it is working)
+		boost::mutex::scoped_lock lock(stop_mtx);
+
 		Pause(false);
+		image_created = false;;
 		//build_image = DM::Image();
 		build_image.release();
 	}
@@ -107,11 +113,25 @@ public:
 		last_pixel = std::numeric_limits<T>::quiet_NaN(); // this will make the image acquire whatever is currently displayed when you start it
 	}
 
-	void CreateBuildImage(std::string name, unsigned long x, unsigned long y, unsigned long z)
+	void CreateBuildImage(std::string suffix)
 	{
 		DEBUG1("Builder::CreateBuildImage invoked");
-		build_image = CreateImage(name, x, y, z);
+		unsigned long x, y;
+		image.GetDimensionSizes(x, y);
+
+		std::string name = image.GetName().Append(" " + suffix)
+
+		DEBUG1("Builder::CreateBuildImage creating new image");
+		build_image = CreateImage(name, x, y, expand_size);
 		image_created = true;
+
+		// copy tags
+		DEBUG1("Builder::CreateBuildImage - Copied tags to new image");
+		build_image.GetTagGroup().CopyTagsFrom(image.GetTagGroup());
+
+		// copy calibration
+		DEBUG1("Builder::CreateBuildImage - Copied calibration to new image");
+		build_image.CopyCalibrationFrom(image);
 
 		//build_image.GetTagGroup().GetOrCreateTagGroup("Stack builder").GetOrCreateTagGroup("INDEX GOES HERE").CreateNewLabeledTag()
 
@@ -306,16 +326,16 @@ public:
 			return; // nothing to do here
 		}
 
+		boost::mutex::scoped_lock lock(stop_mtx);
+
 		// get the detail from the image (move to create new image fucntion?)
 		std::string n = image.GetName();
 
 		// TODO: could create image on when adding the image, but don't show it until it is started
 		if (!image_created)
 		{
-			unsigned long x, y;
-			image.GetDimensionSizes(x, y);
 			DEBUG1("Builder::DoWork - Making a build image for " + n);
-			CreateBuildImage(n + " stack", x, y, expand_size); // x, y defined at top now
+			CreateBuildImage("stack"); // x, y defined at top now
 			time_last = boost::chrono::high_resolution_clock::now();
 		}
 
@@ -385,7 +405,7 @@ public:
 			DM::TagGroup sb_i_tg = sb_tg.GetOrCreateTagGroup(boost::lexical_cast<std::string>(next_slice));
 			sb_i_tg.SetTagAsDouble("Clock time", tim);
 
-			sb_tg.SetTagAsLong("Last update", next_slice);
+			sb_tg.SetTagAsLong("Last updated", next_slice);
 			//std::string tag = "Stack builder:" + boost::lexical_cast<std::string>(next_slice) + ":Clock time";
 			//double time = time_span.count();
 			//DM::TagGroupSetTagAsDouble(tg, tag.c_str(), time);
