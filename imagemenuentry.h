@@ -86,12 +86,13 @@ public:
 
 	void StopBuild()
 	{
-		is_building = false;
-
+		DEBUG1("Builder::StopBuild waiting for mutex");
 		// wait for the main work loop to have stopped (in case it is working)
 		boost::mutex::scoped_lock lock(stop_mtx);
 
+		DEBUG1("Builder::StopBuild resetting variables");
 		Pause(false);
+		is_building = false;
 		image_created = false;;
 		//build_image = DM::Image();
 		build_image.release();
@@ -319,14 +320,14 @@ public:
 
 		// set the last pixel for next time
 		last_pixel = new_last;
+		{
+		boost::mutex::scoped_lock lock(stop_mtx);
 
 		if (!is_building)
 		{
 			DEBUG1("Builder::DoWork - Not building yet");
 			return; // nothing to do here
 		}
-
-		boost::mutex::scoped_lock lock(stop_mtx);
 
 		// get the detail from the image (move to create new image fucntion?)
 		std::string n = image.GetName();
@@ -391,10 +392,10 @@ public:
 			// copy the data over
 			std::memcpy(idata_stack + slice_ind, idata_live, n_bytes);
 			DEBUG1("Builder::DoWork - Copied memory across");
-			
+
 			boost::chrono::high_resolution_clock::time_point t_now = boost::chrono::high_resolution_clock::now();
 			boost::chrono::duration<double> time_span = boost::chrono::duration_cast<boost::chrono::duration<double>>(t_now - time_last);
-			
+
 			double tim = time_span.count();
 			time_last = t_now;
 
@@ -425,8 +426,9 @@ public:
 		// increment the next slice
 		++next_slice;
 
-		// need to handle the different modes here
+		} // end of mutex lock
 
+		// need to handle the different modes here
 		// if just one run, exit and stop build if we are at out stack limit
 		// if we are looping, reset index
 		// if we are expanding, create new build image

@@ -62,8 +62,10 @@ void ThreadWorker::Stop()
 	if (paused)
 		Pause(); // if paused, we want to unpause it so we can stop it
 	WaitForSingleObject(m_hThread, INFINITE); // wait for thread to finish
-
-	CloseHandle(m_hThread); m_hThread = NULL;
+	
+	if (GetHandleInformation(m_hThread, NULL) != 0) { 
+		CloseHandle(m_hThread); m_hThread = NULL; // this one crashes without if statement (seems to be only on debug?)
+	}
 	CloseHandle(m_hWorkEvent); m_hWorkEvent = NULL;
 	CloseHandle(m_hKillEvent); m_hKillEvent = NULL;
 }
