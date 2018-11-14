@@ -7,6 +7,7 @@
 #include <boost/cstdint.hpp>
 
 #include <limits> // for nan
+#include <ctime> // to convert chrono to a time string
 #include <boost/lexical_cast.hpp>
 #include <boost/chrono.hpp>
 
@@ -75,9 +76,12 @@ private:
 
 	unsigned long expand_size;
 	unsigned long current_size;
-
-	boost::chrono::high_resolution_clock::time_point time_last;
 public:
+
+	~Builder()
+	{
+		StopBuild();
+	}
 
 	bool IsBuilding()
 	{
@@ -337,7 +341,6 @@ public:
 		{
 			DEBUG1("Builder::DoWork - Making a build image for " + n);
 			CreateBuildImage("stack"); // x, y defined at top now
-			time_last = boost::chrono::high_resolution_clock::now();
 		}
 
 		if (!build_image.IsValid() || build_image.CountImageDisplays() < 1)
@@ -393,18 +396,29 @@ public:
 			std::memcpy(idata_stack + slice_ind, idata_live, n_bytes);
 			DEBUG1("Builder::DoWork - Copied memory across");
 
-			boost::chrono::high_resolution_clock::time_point t_now = boost::chrono::high_resolution_clock::now();
-			boost::chrono::duration<double> time_span = boost::chrono::duration_cast<boost::chrono::duration<double>>(t_now - time_last);
+			// https://stackoverflow.com/questions/27136854/c11-actual-system-time-with-milliseconds
+			// https://stackoverflow.com/questions/12835577/how-to-convert-stdchronotime-point-to-calendar-datetime-string-with-fraction
 
-			double tim = time_span.count();
-			time_last = t_now;
+			// this bit calculates the ms
+			boost::chrono::system_clock::time_point t_now = boost::chrono::system_clock::now();
+			boost::chrono::system_clock::duration t_span = t_now.time_since_epoch();
+			t_span -= boost::chrono::duration_cast<boost::chrono::seconds>(t_span);
+			unsigned t_ms = static_cast<unsigned>(t_span / boost::chrono::milliseconds(1));
+
+			// this bit is the rest of the time
+			time_t tt = boost::chrono::system_clock::to_time_t(t_now);
+			tm t_local = *localtime(&tt);
+
+			// convert to a string
+			std::stringstream ss;
+			ss << t_local.tm_year + 1900 << t_local.tm_mon+1 << t_local.tm_mday << " " << t_local.tm_hour << ":" << t_local.tm_min << ":" << t_local.tm_sec << ":" << t_ms;
 
 			DEBUG1("Builder::DoWork - Got time of current slice");
 
 			DM::TagGroup tg = build_image.GetTagGroup();
 			DM::TagGroup sb_tg = tg.GetOrCreateTagGroup("Stack builder");
 			DM::TagGroup sb_i_tg = sb_tg.GetOrCreateTagGroup(boost::lexical_cast<std::string>(next_slice));
-			sb_i_tg.SetTagAsDouble("Clock time", tim);
+			sb_i_tg.SetTagAsString("Clock time", ss.str());
 
 			sb_tg.SetTagAsLong("Last updated", next_slice);
 			//std::string tag = "Stack builder:" + boost::lexical_cast<std::string>(next_slice) + ":Clock time";
@@ -437,7 +451,7 @@ public:
 			DEBUG1("Builder::DoWork - At end of current stack");
 			if (mode == BuildMode::Fixed)
 			{
-				DEBUG1("Builder::DoWork - Stoping");
+				DEBUG1("Builder::DoWork - Stopping");
 				StopBuild();
 			}
 			else if (mode == BuildMode::Circular)

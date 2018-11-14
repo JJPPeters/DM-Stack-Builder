@@ -19,6 +19,7 @@ void StackMenu::InstallMenu()
 	// Add the 'add' entry and bind it to the function it will use
 	AddImage = DM::NewMenuItem("Add front");
 	AddImage->SetAction(boost::bind(&StackMenu::ImageCommandAction, ref_this_ptr));
+	AddImage->SetAccelerator(DM::MakeKeystroke("shift-alt-a"));
 	ImagesMenu->AddMenuItem(AddImage);
 
 	// add a separator
@@ -54,12 +55,21 @@ void StackMenu::InstallMenu()
 	// Add an extra item as a pause (may be moved later)
 	fMenuItem2 = DM::NewMenuItem("Pause");
 	fMenuItem2->SetAction(boost::bind(&StackMenu::Command2Action, ref_this_ptr));
+	fMenuItem2->SetAccelerator(DM::MakeKeystroke("shift-alt-d"));
 	TopMenu->AddMenuItem(fMenuItem2);
 
 	// Add an extra item as a stop (may be moved later)
 	fMenuItem3 = DM::NewMenuItem("Start");
 	fMenuItem3->SetAction(boost::bind(&StackMenu::Command3Action, ref_this_ptr));
+	fMenuItem3->SetAccelerator(DM::MakeKeystroke("shift-alt-s"));
 	TopMenu->AddMenuItem(fMenuItem3);
+
+	// set everything we want to be enabled
+	AddImage->SetIsEnabled(true);
+	itemCircular->SetIsEnabled(true);
+	itemFixed->SetIsEnabled(true);
+	itemExpanding->SetIsEnabled(true);
+	itemStackSize->SetIsEnabled(true);
 
 	// add the top menu to the menu bar
 	DM::MenuBarPtr menuBar = DM::GetMenuBar();
@@ -167,22 +177,6 @@ void StackMenu::OnAboutToOpenMenuBar(uint32 event_mask, const DM::MenuBarPtr &me
 {
 	DEBUG2("StackMenu::OnAboutToOpenMenuBar invoked");
 
-	 //ClearInvalidImages(); // do this now?
-
-	// TODO: test if image is already present in the list
-
-	if (ImageEntries.size() > 0)
-	{
-		fMenuItem2->SetIsEnabled(true);
-		fMenuItem3->SetIsEnabled(true);
-		DEBUG1("StackMenu::OnAboutToOpenMenuBar - Images are being monitored, enabling Start/Pause");
-	}
-
-	itemCircular->SetIsEnabled(true);
-	itemFixed->SetIsEnabled(true);
-	itemExpanding->SetIsEnabled(true);
-	itemStackSize->SetIsEnabled(true);
-
 	itemStackSize->SetName("Stack size: " + boost::lexical_cast<std::string>(stack_size));
 
 	// This does nothing if entry is on third level?
@@ -218,10 +212,7 @@ void StackMenu::OnAboutToOpenMenuBar(uint32 event_mask, const DM::MenuBarPtr &me
 	else
 	{
 		fMenuItem3->SetName("Start");
-		fMenuItem2->SetIsEnabled(false);
-
-		DM::Image image = DM::FindFrontImage();
-		AddImage->SetIsEnabled(image.IsValid());
+		//fMenuItem2->SetIsEnabled(false);
 	}
 
 	bool is_paused = false;
@@ -269,6 +260,14 @@ void StackMenu::ImageCommandAction()
 		}
 		else
 			DMResult << "Image already in watch list" << std::endl;
+
+		// set our menu states
+		//fMenuItem2->SetIsEnabled(!ImageEntries.empty());
+		fMenuItem3->SetIsEnabled(!ImageEntries.empty());
+
+	} else
+	{
+		DEBUG1("StackMenu::ImageCommandAction No valid image");
 	}
 }
 
@@ -315,22 +314,16 @@ void StackMenu::Command2Action()
 {
 	DEBUG1("StackMenu::Pause invoked");
 
-	if (fMenuItem2->GetName().get_string() == "Pause")
+	if (fMenuItem2->GetName().get_string() == "Pause") {
 		for (int i = 0; i < ImageEntries.size(); ++i)
 			ImageEntries[i]->Pause(true);
-	else
+		fMenuItem2->SetName("UnPause");
+	}
+	else {
 		for (int i = 0; i < ImageEntries.size(); ++i)
 			ImageEntries[i]->Pause(false);
-	//bool paused = false;
-	//for (int i = 0; i < ImageEntries.size(); ++i)
-	//{
-	//	ImageEntries[i]->Pause();
-	//}
-
-	//if (fMenuItem2->GetName().get_string() == "Pause")
-	//	fMenuItem2->SetName("Unpause");
-	//else
-	//	fMenuItem2->SetName("Pause");
+		fMenuItem2->SetName("Pause");
+	}
 }
 
 void StackMenu::Command3Action()
@@ -350,15 +343,17 @@ void StackMenu::Command3Action()
 			else if (isExpanding)
 				ImageEntries[i]->StartBuildingExpanding(stack_size);
 		}
-		//fMenuItem3->SetName("Stop");
+		fMenuItem2->SetIsEnabled(true);
+		fMenuItem3->SetName("Stop");
 	}
 	else
 	{
 		// just testing the stop ability for now
 		for (int i = 0; i < ImageEntries.size(); ++i)
 			ImageEntries[i]->StopBuild();
-
-		//fMenuItem3->SetName("Start");
+		fMenuItem2->SetIsEnabled(false);
+		fMenuItem2->SetName("Pause");
+		fMenuItem3->SetName("Start");
 	}
 }
 
@@ -375,5 +370,12 @@ void StackMenu::RemoveImage(const DM::Image &img)
 	{
 		if (*ImageEntries[i] == img)
 			RemoveIndex(i);
+	}
+
+	// set our menu states
+	if (ImageEntries.empty())
+	{
+		fMenuItem2->SetIsEnabled(false);
+		fMenuItem3->SetIsEnabled(false);
 	}
 }
